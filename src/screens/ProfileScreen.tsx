@@ -10,7 +10,7 @@ import {
   TextInput,
   Modal
 } from 'react-native';
-import { ArrowLeft, Edit2, LogOut } from 'lucide-react-native';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { COLORS, FONTS } from '../constants/theme';
 
@@ -44,7 +44,7 @@ export const ProfileScreen: React.FC = () => {
           onPress={() => setActiveOverlay(null)}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={24} color={COLORS.darkGreen} strokeWidth={2.5} />
+          <Feather name="arrow-left" size={24} color={COLORS.darkGreen} />
         </TouchableOpacity>
         <Text style={styles.pageTitle}>PROFILE</Text>
         <TouchableOpacity
@@ -57,7 +57,7 @@ export const ProfileScreen: React.FC = () => {
           }}
           activeOpacity={0.7}
         >
-          <LogOut size={22} color={COLORS.darkGreen} />
+          <Feather name="log-out" size={22} color={COLORS.darkGreen} />
         </TouchableOpacity>
       </View>
 

@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { Bell } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { EpisodaLogo } from './EpisodaLogo';
 import { COLORS } from '../constants/theme';
@@ -40,7 +40,7 @@ export const Header: React.FC = () => {
         activeOpacity={0.7}
         accessibilityLabel="Open Notifications"
       >
-        <Bell size={26} color={COLORS.darkGreen} strokeWidth={2} />
+        <Feather name="bell" size={24} color={COLORS.darkGreen} />
         {unreadCount > 0 && <View style={styles.badge} />}
       </TouchableOpacity>
     </View>

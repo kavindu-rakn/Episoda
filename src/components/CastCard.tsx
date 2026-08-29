@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
-import { Check } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { CastMember } from '../types';
 import { COLORS, FONTS } from '../constants/theme';
 
@@ -25,7 +25,7 @@ export const CastCard: React.FC<CastCardProps> = ({ member }) => {
           {/* Green Checkmark Badge on Character Image */}
           {member.isVerified && (
             <View style={styles.verifiedBadge}>
-              <Check size={12} color="#10B981" strokeWidth={3.5} />
+              <Feather name="check" size={12} color="#10B981" />
             </View>
           )}
         </View>

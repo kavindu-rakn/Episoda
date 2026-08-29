@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { Plus, Minus } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { WatchlistItem } from '../types';
 import { COLORS, FONTS } from '../constants/theme';
 
@@ -57,14 +57,14 @@ export const WatchlistRow: React.FC<WatchlistRowProps> = ({
           activeOpacity={0.7}
           disabled={item.watchedEpisodes <= 0}
         >
-          <Minus size={14} color={item.watchedEpisodes > 0 ? COLORS.darkGreen : COLORS.textMuted} />
+          <Feather name="minus" size={14} color={item.watchedEpisodes > 0 ? COLORS.darkGreen : COLORS.textMuted} />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.stepButton, styles.stepButtonPlus]}
           onPress={onIncrement}
           activeOpacity={0.7}
         >
-          <Plus size={14} color="#FFFFFF" strokeWidth={2.5} />
+          <Feather name="plus" size={14} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
     </View>

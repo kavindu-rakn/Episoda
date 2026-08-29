@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
-import { ArrowLeft, CheckCheck } from 'lucide-react-native';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { NotificationItem } from '../types';
 import { COLORS, FONTS } from '../constants/theme';
@@ -51,7 +51,7 @@ export const NotificationScreen: React.FC = () => {
           onPress={() => setActiveOverlay(null)}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={24} color={COLORS.darkGreen} strokeWidth={2.5} />
+          <Feather name="arrow-left" size={24} color={COLORS.darkGreen} />
         </TouchableOpacity>
         
         <Text style={styles.pageTitle}>NOTIFICATIONS</Text>
@@ -62,7 +62,7 @@ export const NotificationScreen: React.FC = () => {
           activeOpacity={0.7}
           accessibilityLabel="Mark all as read"
         >
-          <CheckCheck size={22} color={COLORS.darkGreen} />
+          <Ionicons name="checkmark-done" size={22} color={COLORS.darkGreen} />
         </TouchableOpacity>
       </View>
 

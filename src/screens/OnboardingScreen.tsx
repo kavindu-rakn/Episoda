@@ -7,7 +7,7 @@ import {
   Dimensions 
 } from 'react-native';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
-import { ArrowLeft } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { COLORS, FONTS } from '../constants/theme';
 
@@ -104,7 +104,7 @@ export const OnboardingScreen: React.FC = () => {
       <View style={styles.topRow}>
         {currentSlide > 0 ? (
           <TouchableOpacity onPress={handlePrev} style={styles.backButton} activeOpacity={0.7}>
-            <ArrowLeft size={24} color={COLORS.darkGreen} strokeWidth={2.5} />
+            <Feather name="arrow-left" size={24} color={COLORS.darkGreen} />
           </TouchableOpacity>
         ) : (
           <View style={styles.backPlaceholder} />

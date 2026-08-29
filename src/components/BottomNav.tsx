@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Home, Tv, Search, Mic, ListOrdered } from 'lucide-react-native';
+import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { TabRoute } from '../types';
 import { COLORS, FONTS } from '../constants/theme';
@@ -8,41 +8,40 @@ import { COLORS, FONTS } from '../constants/theme';
 interface TabItem {
   key: TabRoute;
   label: string;
-  icon: (color: string, size: number) => React.ReactNode;
+  renderIcon: (color: string, size: number) => React.ReactNode;
 }
 
 const TABS: TabItem[] = [
   {
     key: 'home',
     label: 'Home',
-    icon: (color, size) => <Home size={size} color={color} strokeWidth={2.2} />,
+    renderIcon: (color, size) => <Feather name="home" size={size} color={color} />,
   },
   {
     key: 'watchlist',
     label: 'Watchlist',
-    icon: (color, size) => <Tv size={size} color={color} strokeWidth={2.2} />,
+    renderIcon: (color, size) => <Feather name="tv" size={size} color={color} />,
   },
   {
     key: 'discover',
     label: 'Discover',
-    icon: (color, size) => <Search size={size} color={color} strokeWidth={2.2} />,
+    renderIcon: (color, size) => <Feather name="search" size={size} color={color} />,
   },
   {
     key: 'cast',
     label: 'Cast & VA',
-    icon: (color, size) => <Mic size={size} color={color} strokeWidth={2.2} />,
+    renderIcon: (color, size) => <Feather name="mic" size={size} color={color} />,
   },
   {
     key: 'ranking',
     label: 'Ranking',
-    icon: (color, size) => <ListOrdered size={size} color={color} strokeWidth={2.2} />,
+    renderIcon: (color, size) => <Feather name="list" size={size} color={color} />,
   },
 ];
 
 export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab, activeOverlay } = useApp();
 
-  // If viewing a full overlay like Onboarding or Auth, don't show the bottom bar
   if (activeOverlay === 'onboarding' || activeOverlay === 'auth') {
     return null;
   }
@@ -61,7 +60,7 @@ export const BottomNav: React.FC = () => {
               onPress={() => setActiveTab(tab.key)}
               activeOpacity={0.7}
             >
-              {tab.icon(color, 24)}
+              {tab.renderIcon(color, 24)}
               <Text
                 style={[
                   styles.label,

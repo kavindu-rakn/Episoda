@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Check } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { MediaType } from '../types';
 import { COLORS, FONTS } from '../constants/theme';
 
@@ -28,7 +28,7 @@ export const FilterTabs: React.FC<FilterTabsProps> = ({
             activeOpacity={0.7}
           >
             <View style={[styles.box, isChecked && styles.boxChecked]}>
-              {isChecked && <Check size={14} color={COLORS.darkGreen} strokeWidth={3} />}
+              {isChecked && <Feather name="check" size={14} color={COLORS.darkGreen} />}
             </View>
             <Text style={styles.label}>{type.toUpperCase()}</Text>
           </TouchableOpacity>

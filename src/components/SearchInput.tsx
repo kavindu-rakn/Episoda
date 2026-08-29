@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Search, X } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/theme';
 
 interface SearchInputProps {
@@ -18,7 +18,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Search size={18} color={COLORS.textMuted} style={styles.icon} />
+      <Feather name="search" size={18} color={COLORS.textMuted} style={styles.icon} />
       <TextInput
         style={styles.input}
         value={value}
@@ -36,7 +36,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           }}
           style={styles.clearButton}
         >
-          <X size={16} color={COLORS.darkGreen} strokeWidth={2.5} />
+          <Feather name="x" size={16} color={COLORS.darkGreen} />
         </TouchableOpacity>
       )}
     </View>
