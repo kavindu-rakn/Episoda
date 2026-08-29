@@ -1,9 +1,11 @@
 ﻿import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { TabRoute } from '../types';
 import { COLORS, FONTS } from '../constants/theme';
+import { hapticSelection } from '../utils/haptics';
 
 interface TabItem {
   key: TabRoute;
@@ -41,13 +43,21 @@ const TABS: TabItem[] = [
 
 export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab, activeOverlay } = useApp();
+  const insets = useSafeAreaInsets();
 
   if (activeOverlay === 'onboarding' || activeOverlay === 'auth') {
     return null;
   }
 
+  const handleTabPress = (tabKey: TabRoute) => {
+    if (activeTab !== tabKey) {
+      hapticSelection();
+      setActiveTab(tabKey);
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 6) }]}>
       <View style={styles.bar}>
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
@@ -57,8 +67,10 @@ export const BottomNav: React.FC = () => {
             <TouchableOpacity
               key={tab.key}
               style={styles.tabButton}
-              onPress={() => setActiveTab(tab.key)}
+              onPress={() => handleTabPress(tab.key)}
               activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
             >
               {tab.renderIcon(color, 24)}
               <Text
@@ -85,11 +97,10 @@ const styles = StyleSheet.create({
   },
   bar: {
     flexDirection: 'row',
-    height: 64,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: 8,
-    paddingBottom: 4,
   },
   tabButton: {
     flex: 1,

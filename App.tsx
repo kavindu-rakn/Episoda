@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { 
   useFonts, 
   ChakraPetch_400Regular, 
@@ -115,18 +115,18 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+      <View style={styles.rootContainer}>
         <StatusBar style="dark" />
         <AppProvider>
           <MainNavigator />
         </AppProvider>
-      </SafeAreaView>
+      </View>
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  rootContainer: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
