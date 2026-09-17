@@ -1,4 +1,4 @@
-﻿export const COLORS = {
+export const COLORS = {
   // Backgrounds
   background: '#E6FAF5', // Soft Mint / Seafoam
   backgroundLight: '#F2FCF9',
@@ -33,6 +33,22 @@
   // Progress
   progressBackground: '#D1E7DD',
   progressFill: '#00BFA5',
+
+  // Rank Badge Accent
+  rankCyan: '#00F5D4',
+};
+
+export const RADIUS = {
+  none: 0,
+  sharp: 2,
+  sm: 4,
+  pill: 9999,
+};
+
+export const BORDERS = {
+  teal: 2.5,
+  dark: 1.5,
+  thin: 1,
 };
 
 export const FONTS = {
@@ -51,3 +67,4 @@ export const SPACING = {
   xxl: 24,
   xxxl: 32,
 };
+

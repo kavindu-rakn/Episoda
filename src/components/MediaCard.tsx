@@ -1,7 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Show } from '../types';
-import { COLORS, FONTS } from '../constants/theme';
+import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 
 interface MediaCardProps {
   show: Show;
@@ -10,7 +10,7 @@ interface MediaCardProps {
 }
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 2;
+const CARD_WIDTH = (width - 44) / 2;
 
 export const MediaCard: React.FC<MediaCardProps> = ({
   show,
@@ -29,7 +29,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
           style={styles.image}
           resizeMode="cover"
         />
-        {/* Crisp Teal Border as in Figma */}
+        {/* Crisp Sharp Teal Border as in Figma */}
         <View style={styles.borderOverlay} />
       </View>
 
@@ -45,13 +45,13 @@ export const MediaCard: React.FC<MediaCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     width: CARD_WIDTH,
-    marginBottom: 16,
+    marginBottom: 14,
     alignItems: 'center',
   },
   imageWrapper: {
     width: '100%',
     height: CARD_WIDTH * 1.05,
-    borderRadius: 2,
+    borderRadius: RADIUS.none,
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: '#0F2620',
@@ -66,9 +66,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderWidth: 2.5,
+    borderWidth: BORDERS.teal,
     borderColor: COLORS.primary,
-    borderRadius: 2,
+    borderRadius: RADIUS.none,
   },
   title: {
     fontFamily: FONTS.semiBold,
@@ -78,3 +78,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+

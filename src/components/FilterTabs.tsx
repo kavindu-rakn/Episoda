@@ -1,8 +1,8 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { MediaType } from '../types';
-import { COLORS, FONTS } from '../constants/theme';
+import { COLORS, FONTS, RADIUS } from '../constants/theme';
 
 interface FilterTabsProps {
   selectedType: MediaType | 'ALL';
@@ -28,7 +28,7 @@ export const FilterTabs: React.FC<FilterTabsProps> = ({
             activeOpacity={0.7}
           >
             <View style={[styles.box, isChecked && styles.boxChecked]}>
-              {isChecked && <Feather name="check" size={14} color={COLORS.darkGreen} />}
+              {isChecked && <Feather name="check" size={14} color={COLORS.darkGreen} strokeWidth={3} />}
             </View>
             <Text style={styles.label}>{type.toUpperCase()}</Text>
           </TouchableOpacity>
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   box: {
     width: 20,
     height: 20,
-    borderRadius: 3,
+    borderRadius: RADIUS.none,
     borderWidth: 1.8,
     borderColor: COLORS.darkGreen,
     backgroundColor: '#FFFFFF',
@@ -71,3 +71,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+

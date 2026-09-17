@@ -1,7 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
 import { RankingItem } from '../types';
-import { COLORS, FONTS } from '../constants/theme';
+import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 
 interface RankingCardProps {
   item: RankingItem;
@@ -20,7 +20,7 @@ export const RankingCard: React.FC<RankingCardProps> = ({ item }) => {
           resizeMode="cover"
         />
 
-        {/* Crisp Teal Border */}
+        {/* Crisp Sharp Teal Border */}
         <View style={styles.borderOverlay} />
 
         {/* Glowing Rank Badge (#1, #2, etc.) in Top-Left */}
@@ -49,6 +49,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: '#0F2620',
+    borderRadius: RADIUS.none,
   },
   image: {
     width: '100%',
@@ -60,23 +61,22 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderWidth: 2,
+    borderWidth: BORDERS.teal,
     borderColor: COLORS.primary,
+    borderRadius: RADIUS.none,
   },
   rankBadge: {
     position: 'absolute',
     top: 3,
     left: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
     paddingVertical: 1,
-    borderRadius: 2,
   },
   rankText: {
     fontFamily: FONTS.bold,
-    fontSize: 14,
-    color: '#00F5D4',
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    fontSize: 15,
+    color: COLORS.rankCyan,
+    textShadowColor: 'rgba(0, 0, 0, 0.95)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
@@ -88,3 +88,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+

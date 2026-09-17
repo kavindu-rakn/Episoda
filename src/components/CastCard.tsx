@@ -1,8 +1,8 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { CastMember } from '../types';
-import { COLORS, FONTS } from '../constants/theme';
+import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 
 interface CastCardProps {
   member: CastMember;
@@ -25,7 +25,7 @@ export const CastCard: React.FC<CastCardProps> = ({ member }) => {
           {/* Green Checkmark Badge on Character Image */}
           {member.isVerified && (
             <View style={styles.verifiedBadge}>
-              <Feather name="check" size={12} color="#10B981" />
+              <Feather name="check" size={13} color="#10B981" strokeWidth={3} />
             </View>
           )}
         </View>
@@ -42,7 +42,7 @@ export const CastCard: React.FC<CastCardProps> = ({ member }) => {
           />
         </View>
 
-        {/* Crisp Teal Border */}
+        {/* Crisp Sharp Teal Border */}
         <View style={styles.borderOverlay} />
       </View>
 
@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: '#000',
     overflow: 'hidden',
+    borderRadius: RADIUS.none,
   },
   halfImage: {
     flex: 1,
@@ -78,7 +79,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   divider: {
-    width: 1,
+    width: 2,
     height: '100%',
     backgroundColor: COLORS.primary,
   },
@@ -88,15 +89,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderWidth: 2,
+    borderWidth: BORDERS.teal,
     borderColor: COLORS.primary,
+    borderRadius: RADIUS.none,
   },
   verifiedBadge: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 8,
+    bottom: 3,
+    right: 3,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    borderRadius: 2,
     padding: 2,
   },
   caption: {
@@ -107,3 +109,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
