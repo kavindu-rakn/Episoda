@@ -1,5 +1,23 @@
-﻿export type MediaType = 'TV' | 'Anime' | 'ONA';
+export type MediaType = 'TV' | 'Anime' | 'ONA';
 export type WatchStatus = 'Watching' | 'Planning' | 'Completed';
+
+export interface EpisodeItem {
+  id: string;
+  episodeNumber: number;
+  title: string;
+  duration?: string;
+  airDate?: string;
+  synopsis?: string;
+}
+
+export interface SeasonInfo {
+  id: string;
+  seasonNumber: number;
+  title: string;
+  posterUrl: string;
+  totalEpisodes: number;
+  episodes?: EpisodeItem[];
+}
 
 export interface Show {
   id: string;
@@ -7,18 +25,18 @@ export interface Show {
   shortTitle?: string;
   type: MediaType;
   posterUrl: string;
+  backdropUrl?: string;
   totalEpisodes: number | '∞';
-  seasons?: Array<{
-    id: string;
-    seasonNumber: number;
-    title: string;
-    posterUrl: string;
-    totalEpisodes: number;
-  }>;
+  seasons?: SeasonInfo[];
+  episodes?: EpisodeItem[];
+  genres?: string[];
+  year?: number | string;
+  status?: string;
   rating?: number;
   rank?: number;
   description?: string;
 }
+
 
 export interface WatchlistItem {
   id: string;
