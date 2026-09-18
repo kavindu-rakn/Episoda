@@ -1,8 +1,9 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { WatchlistItem } from '../types';
-import { COLORS, FONTS } from '../constants/theme';
+import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
+import { hapticLight, hapticSuccess } from '../utils/haptics';
 
 interface WatchlistRowProps {
   item: WatchlistItem;
@@ -17,55 +18,88 @@ export const WatchlistRow: React.FC<WatchlistRowProps> = ({
   onDecrement,
   onPress,
 }) => {
+  const isInfinity =
+    item.totalEpisodes === '∞' ||
+    (typeof item.totalEpisodes === 'number' && item.totalEpisodes >= 999);
+  const displayTotal = isInfinity ? '∞' : item.totalEpisodes;
+
+  const handlePlus = () => {
+    if (
+      typeof item.totalEpisodes === 'number' &&
+      item.totalEpisodes > 0 &&
+      item.watchedEpisodes + 1 >= item.totalEpisodes
+    ) {
+      hapticSuccess();
+    } else {
+      hapticLight();
+    }
+    onIncrement();
+  };
+
+  const handleMinus = () => {
+    hapticLight();
+    onDecrement();
+  };
+
+
   return (
     <View style={styles.card}>
-      <TouchableOpacity
-        style={styles.mainContent}
-        onPress={onPress}
-        activeOpacity={0.8}
-      >
-        {/* Left Thumbnail */}
+      {/* Left Thumbnail (Sharp square) */}
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.thumbWrapper}>
         <Image
           source={{ uri: item.posterUrl }}
           style={styles.thumbnail}
           resizeMode="cover"
         />
+      </TouchableOpacity>
 
-        {/* Middle Title */}
+      {/* Middle Title */}
+      <TouchableOpacity
+        style={styles.titleWrapper}
+        onPress={onPress}
+        activeOpacity={0.8}
+      >
         <Text style={styles.title} numberOfLines={1}>
           {item.title}
         </Text>
-
-        {/* Right Episode Progress */}
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>
-            {item.watchedEpisodes}/{item.totalEpisodes}
-          </Text>
-        </View>
-
-        {/* Far Right Media Type Tag */}
-        <View style={styles.typeBadge}>
-          <Text style={styles.typeText}>{item.type}</Text>
-        </View>
       </TouchableOpacity>
 
-      {/* Quick Stepper Buttons (+ / -) */}
+      {/* Stepper Buttons (- / +) */}
       <View style={styles.stepperContainer}>
         <TouchableOpacity
-          style={styles.stepButton}
-          onPress={onDecrement}
+          style={[styles.stepButton, item.watchedEpisodes <= 0 && styles.stepButtonDisabled]}
+          onPress={handleMinus}
           activeOpacity={0.7}
           disabled={item.watchedEpisodes <= 0}
+          accessibilityLabel="Decrement episode"
         >
-          <Feather name="minus" size={14} color={item.watchedEpisodes > 0 ? COLORS.darkGreen : COLORS.textMuted} />
+          <Feather
+            name="minus"
+            size={13}
+            color={item.watchedEpisodes > 0 ? COLORS.darkGreen : COLORS.textMuted}
+            strokeWidth={2.5}
+          />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.stepButton, styles.stepButtonPlus]}
-          onPress={onIncrement}
+          onPress={handlePlus}
           activeOpacity={0.7}
+          accessibilityLabel="Increment episode"
         >
-          <Feather name="plus" size={14} color="#FFFFFF" />
+          <Feather name="plus" size={13} color="#FFFFFF" strokeWidth={2.5} />
         </TouchableOpacity>
+      </View>
+
+      {/* Rigid Column: Episode Progress (e.g. 780/∞ or 3/8) */}
+      <View style={styles.progressColumn}>
+        <Text style={styles.progressText}>
+          {item.watchedEpisodes}/{displayTotal}
+        </Text>
+      </View>
+
+      {/* Rigid Column: Media Type Badge (Anime, TV, ONA) */}
+      <View style={styles.typeColumn}>
+        <Text style={styles.typeText}>{item.type}</Text>
       </View>
     </View>
   );
@@ -74,69 +108,80 @@ export const WatchlistRow: React.FC<WatchlistRowProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.2,
+    borderWidth: BORDERS.dark,
     borderColor: COLORS.darkGreen,
+    borderRadius: RADIUS.none,
     marginHorizontal: 16,
     marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 7,
     paddingHorizontal: 10,
+    height: 60,
   },
-  mainContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  thumbnail: {
+  thumbWrapper: {
     width: 44,
     height: 44,
-    borderRadius: 3,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#0F2620',
+    overflow: 'hidden',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  titleWrapper: {
+    flex: 1,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
   },
   title: {
-    flex: 1,
     fontFamily: FONTS.semiBold,
     fontSize: 14,
-    color: COLORS.darkGreen,
-  },
-  progressContainer: {
-    paddingHorizontal: 6,
-  },
-  progressText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 14,
-    color: COLORS.darkGreen,
-  },
-  typeBadge: {
-    minWidth: 48,
-    alignItems: 'flex-end',
-  },
-  typeText: {
-    fontFamily: FONTS.medium,
-    fontSize: 13,
     color: COLORS.darkGreen,
   },
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginLeft: 6,
+    marginRight: 6,
   },
   stepButton: {
     width: 24,
     height: 24,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: RADIUS.none,
+    borderWidth: 1.2,
     borderColor: COLORS.darkGreen,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  stepButtonDisabled: {
+    borderColor: '#D1E7DD',
     backgroundColor: '#F8FAFC',
   },
   stepButtonPlus: {
     backgroundColor: COLORS.primaryDark,
     borderColor: COLORS.primaryDark,
+  },
+  progressColumn: {
+    width: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.darkGreen,
+    letterSpacing: 0.2,
+  },
+  typeColumn: {
+    width: 48,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  typeText: {
+    fontFamily: FONTS.medium,
+    fontSize: 13,
+    color: COLORS.darkGreen,
   },
 });

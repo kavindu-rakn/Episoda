@@ -2,8 +2,7 @@
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { WatchlistRow } from '../components/WatchlistRow';
-import { WatchStatus } from '../types';
-import { COLORS, FONTS } from '../constants/theme';
+import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 
 export const WatchlistScreen: React.FC = () => {
   const { watchlist, updateEpisodeProgress } = useApp();
@@ -40,7 +39,7 @@ export const WatchlistScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Page Title */}
+        {/* Page Title matching Figma Screen 7 */}
         <Text style={styles.pageTitle}>WATCHLIST</Text>
 
         {renderSection('Watching', watchingItems)}
@@ -58,7 +57,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 32,
-    paddingTop: 14,
+    paddingTop: 12,
   },
   pageTitle: {
     fontFamily: FONTS.bold,
@@ -72,18 +71,19 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontFamily: FONTS.medium,
-    fontSize: 15,
+    fontFamily: FONTS.bold,
+    fontSize: 16,
     color: COLORS.darkGreen,
     paddingHorizontal: 18,
     marginBottom: 8,
   },
   emptyCard: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#D1E7DD',
+    borderWidth: BORDERS.dark,
+    borderColor: COLORS.darkGreen,
+    borderRadius: RADIUS.none,
     marginHorizontal: 16,
-    padding: 12,
+    paddingVertical: 14,
     alignItems: 'center',
   },
   emptyText: {
