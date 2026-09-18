@@ -10,12 +10,13 @@ import {
   TextInput,
   Modal
 } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { COLORS, FONTS } from '../constants/theme';
+import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
+import { hapticLight, hapticMedium } from '../utils/haptics';
 
 export const ProfileScreen: React.FC = () => {
-  const { userProfile, updateUserProfile, setActiveOverlay, logout } = useApp();
+  const { userProfile, updateUserProfile, logout } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(userProfile.name);
   const [editEmail, setEditEmail] = useState(userProfile.email);
@@ -23,6 +24,7 @@ export const ProfileScreen: React.FC = () => {
   const [editGender, setEditGender] = useState(userProfile.gender);
 
   const handleSaveProfile = () => {
+    hapticMedium();
     updateUserProfile({
       name: editName,
       email: editEmail,
@@ -33,36 +35,32 @@ export const ProfileScreen: React.FC = () => {
     Alert.alert('Success', 'Profile updated successfully!');
   };
 
+  const handleLogout = () => {
+    hapticLight();
+    Alert.alert('Log Out', 'Are you sure you want to log out of EpiSoda?', [
+      { text: 'Cancel', style: 'cancel' },
+      { 
+        text: 'Log Out', 
+        style: 'destructive', 
+        onPress: () => {
+          hapticMedium();
+          logout();
+        }
+      },
+    ]);
+  };
+
   const { stats } = userProfile;
 
   return (
     <View style={styles.container}>
-      {/* Top Bar with Back Button */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => setActiveOverlay(null)}
-          activeOpacity={0.7}
-        >
-          <Feather name="arrow-left" size={24} color={COLORS.darkGreen} />
-        </TouchableOpacity>
+      {/* Title Header matching Figma Screen 11 */}
+      <View style={styles.titleBar}>
         <Text style={styles.pageTitle}>PROFILE</Text>
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={() => {
-            Alert.alert('Log Out', 'Are you sure you want to log out?', [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Log Out', style: 'destructive', onPress: logout },
-            ]);
-          }}
-          activeOpacity={0.7}
-        >
-          <Feather name="log-out" size={22} color={COLORS.darkGreen} />
-        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* User Name Header */}
+        {/* User Name */}
         <Text style={styles.userName}>{userProfile.name}</Text>
 
         {/* Circular Avatar */}
@@ -75,14 +73,17 @@ export const ProfileScreen: React.FC = () => {
           </View>
           <TouchableOpacity
             style={styles.editBtn}
-            onPress={() => setIsEditing(true)}
+            onPress={() => {
+              hapticLight();
+              setIsEditing(true);
+            }}
             activeOpacity={0.7}
           >
             <Text style={styles.editText}>Edit</Text>
           </TouchableOpacity>
         </View>
 
-        {/* User Information Table */}
+        {/* User Information Table (4 Rows with Solid Dark Green Borders) */}
         <View style={styles.infoTable}>
           <View style={styles.infoRow}>
             <Text style={styles.infoText}>Name : {userProfile.name}</Text>
@@ -148,6 +149,16 @@ export const ProfileScreen: React.FC = () => {
             </View>
           </View>
         </View>
+
+        {/* Logout Option */}
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.7}
+        >
+          <Feather name="log-out" size={16} color={COLORS.darkGreen} />
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Edit Modal */}
@@ -189,7 +200,10 @@ export const ProfileScreen: React.FC = () => {
             <View style={styles.modalButtonRow}>
               <TouchableOpacity
                 style={[styles.modalBtn, styles.modalBtnCancel]}
-                onPress={() => setIsEditing(false)}
+                onPress={() => {
+                  hapticLight();
+                  setIsEditing(false);
+                }}
               >
                 <Text style={styles.modalBtnTextCancel}>Cancel</Text>
               </TouchableOpacity>
@@ -212,17 +226,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  topBar: {
-    flexDirection: 'row',
+  titleBar: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    justifyContent: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#D1E7DD',
-  },
-  backButton: {
-    padding: 4,
   },
   pageTitle: {
     fontFamily: FONTS.bold,
@@ -230,12 +237,9 @@ const styles = StyleSheet.create({
     color: COLORS.darkGreen,
     letterSpacing: 4,
   },
-  logoutButton: {
-    padding: 4,
-  },
   scrollContent: {
-    paddingBottom: 40,
-    paddingTop: 16,
+    paddingBottom: 32,
+    paddingTop: 8,
   },
   userName: {
     fontFamily: FONTS.bold,
@@ -252,9 +256,8 @@ const styles = StyleSheet.create({
     width: 110,
     height: 110,
     borderRadius: 55,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: COLORS.darkGreen,
-    padding: 2,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
   },
@@ -276,15 +279,16 @@ const styles = StyleSheet.create({
   },
   infoTable: {
     marginHorizontal: 20,
-    borderWidth: 1.5,
+    borderWidth: BORDERS.dark,
     borderColor: COLORS.darkGreen,
     backgroundColor: '#FFFFFF',
+    borderRadius: RADIUS.none,
     marginBottom: 24,
   },
   infoRow: {
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderBottomWidth: 1.5,
+    borderBottomWidth: BORDERS.dark,
     borderBottomColor: COLORS.darkGreen,
   },
   lastRow: {
@@ -297,13 +301,14 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     marginHorizontal: 20,
-    borderWidth: 1.5,
+    borderWidth: BORDERS.dark,
     borderColor: COLORS.darkGreen,
     backgroundColor: '#FFFFFF',
+    borderRadius: RADIUS.none,
   },
   statsRow: {
     flexDirection: 'row',
-    borderBottomWidth: 1.5,
+    borderBottomWidth: BORDERS.dark,
     borderBottomColor: COLORS.darkGreen,
   },
   lastStatsRow: {
@@ -317,7 +322,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   borderRight: {
-    borderRightWidth: 1.5,
+    borderRightWidth: BORDERS.dark,
     borderRightColor: COLORS.darkGreen,
   },
   statNumber: {
@@ -332,6 +337,20 @@ const styles = StyleSheet.create({
     color: COLORS.darkGreen,
     textAlign: 'center',
   },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 24,
+    paddingVertical: 8,
+  },
+  logoutText: {
+    fontFamily: FONTS.medium,
+    fontSize: 14,
+    color: COLORS.darkGreen,
+    textDecorationLine: 'underline',
+  },
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -340,7 +359,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: RADIUS.none,
     padding: 20,
     borderWidth: 2,
     borderColor: COLORS.darkGreen,
@@ -363,7 +382,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     borderWidth: 1.5,
     borderColor: COLORS.primary,
-    borderRadius: 4,
+    borderRadius: RADIUS.none,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 12,
@@ -377,7 +396,7 @@ const styles = StyleSheet.create({
   modalBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 4,
+    borderRadius: RADIUS.none,
     alignItems: 'center',
   },
   modalBtnCancel: {

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -45,15 +45,6 @@ const MainNavigator: React.FC = () => {
     return <OnboardingScreen />;
   }
 
-  // Handle Full Overlays
-  if (activeOverlay === 'profile') {
-    return <ProfileScreen />;
-  }
-
-  if (activeOverlay === 'notifications') {
-    return <NotificationScreen />;
-  }
-
   if (activeOverlay === 'onboarding') {
     return <OnboardingScreen />;
   }
@@ -62,8 +53,16 @@ const MainNavigator: React.FC = () => {
     return <AuthScreen />;
   }
 
-  // Active Bottom Tab
+  // Active Main Content
   const renderCurrentTab = () => {
+    if (activeOverlay === 'profile') {
+      return <ProfileScreen />;
+    }
+
+    if (activeOverlay === 'notifications') {
+      return <NotificationScreen />;
+    }
+
     switch (activeTab) {
       case 'home':
         return <HomeScreen />;

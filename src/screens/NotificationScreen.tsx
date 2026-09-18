@@ -1,26 +1,36 @@
 ﻿import React from 'react';
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { NotificationItem } from '../types';
-import { COLORS, FONTS } from '../constants/theme';
+import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
+import { hapticLight, hapticSuccess } from '../utils/haptics';
 
 export const NotificationScreen: React.FC = () => {
   const { 
     notifications, 
     markNotificationRead, 
-    markAllNotificationsRead, 
-    setActiveOverlay 
+    markAllNotificationsRead 
   } = useApp();
+
+  const handleNotificationPress = (id: string) => {
+    hapticLight();
+    markNotificationRead(id);
+  };
+
+  const handleMarkAllRead = () => {
+    hapticSuccess();
+    markAllNotificationsRead();
+  };
 
   const renderNotificationCard = ({ item }: { item: NotificationItem }) => {
     return (
       <TouchableOpacity
         style={[styles.card, !item.isRead && styles.unreadCard]}
-        onPress={() => markNotificationRead(item.id)}
+        onPress={() => handleNotificationPress(item.id)}
         activeOpacity={0.8}
       >
-        {/* Left Thumbnail */}
+        {/* Left Thumbnail (Square) */}
         <Image
           source={{ uri: item.posterUrl }}
           style={styles.thumbnail}
@@ -44,26 +54,20 @@ export const NotificationScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Top Bar with Back Button and Mark All Read */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => setActiveOverlay(null)}
-          activeOpacity={0.7}
-        >
-          <Feather name="arrow-left" size={24} color={COLORS.darkGreen} />
-        </TouchableOpacity>
-        
+      {/* Title Bar matching Figma Screen 12 */}
+      <View style={styles.titleBar}>
         <Text style={styles.pageTitle}>NOTIFICATIONS</Text>
 
-        <TouchableOpacity
-          style={styles.markReadButton}
-          onPress={markAllNotificationsRead}
-          activeOpacity={0.7}
-          accessibilityLabel="Mark all as read"
-        >
-          <Ionicons name="checkmark-done" size={22} color={COLORS.darkGreen} />
-        </TouchableOpacity>
+        {notifications.some(n => !n.isRead) && (
+          <TouchableOpacity
+            style={styles.markReadButton}
+            onPress={handleMarkAllRead}
+            activeOpacity={0.7}
+            accessibilityLabel="Mark all as read"
+          >
+            <Ionicons name="checkmark-done" size={20} color={COLORS.primaryDark} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Notifications List */}
@@ -88,17 +92,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  topBar: {
-    flexDirection: 'row',
+  titleBar: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    justifyContent: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#D1E7DD',
-  },
-  backButton: {
-    padding: 4,
+    position: 'relative',
   },
   pageTitle: {
     fontFamily: FONTS.bold,
@@ -107,21 +105,25 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
   },
   markReadButton: {
+    position: 'absolute',
+    right: 16,
+    top: 12,
     padding: 4,
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 32,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
+    borderWidth: BORDERS.dark,
     borderColor: COLORS.darkGreen,
+    borderRadius: RADIUS.none,
     marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 9,
     paddingHorizontal: 10,
     gap: 12,
   },
@@ -131,10 +133,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0FDF9',
   },
   thumbnail: {
-    width: 40,
-    height: 40,
-    borderRadius: 3,
-    backgroundColor: '#E0F2FE',
+    width: 42,
+    height: 42,
+    borderRadius: RADIUS.none,
+    backgroundColor: '#0F2620',
   },
   messageContainer: {
     flex: 1,

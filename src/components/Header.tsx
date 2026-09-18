@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { Feather } from '@expo/vector-icons';
@@ -9,17 +9,17 @@ import { COLORS } from '../constants/theme';
 import { hapticLight } from '../utils/haptics';
 
 export const Header: React.FC = () => {
-  const { setActiveOverlay, unreadCount } = useApp();
+  const { activeOverlay, setActiveOverlay, unreadCount } = useApp();
   const insets = useSafeAreaInsets();
 
   const handleAvatarPress = () => {
     hapticLight();
-    setActiveOverlay('profile');
+    setActiveOverlay(activeOverlay === 'profile' ? null : 'profile');
   };
 
   const handleNotifPress = () => {
     hapticLight();
-    setActiveOverlay('notifications');
+    setActiveOverlay(activeOverlay === 'notifications' ? null : 'notifications');
   };
 
   return (

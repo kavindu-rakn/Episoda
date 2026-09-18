@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,7 +42,7 @@ const TABS: TabItem[] = [
 ];
 
 export const BottomNav: React.FC = () => {
-  const { activeTab, setActiveTab, activeOverlay } = useApp();
+  const { activeTab, setActiveTab, activeOverlay, setActiveOverlay } = useApp();
   const insets = useSafeAreaInsets();
 
   if (activeOverlay === 'onboarding' || activeOverlay === 'auth') {
@@ -50,11 +50,13 @@ export const BottomNav: React.FC = () => {
   }
 
   const handleTabPress = (tabKey: TabRoute) => {
-    if (activeTab !== tabKey) {
-      hapticSelection();
-      setActiveTab(tabKey);
+    hapticSelection();
+    if (activeOverlay) {
+      setActiveOverlay(null);
     }
+    setActiveTab(tabKey);
   };
+
 
   return (
     <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 6) }]}>
