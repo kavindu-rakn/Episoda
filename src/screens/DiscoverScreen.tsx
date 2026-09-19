@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { SearchInput } from '../components/SearchInput';
 import { FilterTabs } from '../components/FilterTabs';
 import { MediaCard } from '../components/MediaCard';
+import { DiscoverFilterModal } from '../components/DiscoverFilterModal';
 import { useApp } from '../context/AppContext';
 import { INITIAL_SHOWS } from '../data/mockData';
 import { MediaType, Show, DiscoverFilterState, DiscoverSortOption, DEFAULT_DISCOVER_FILTERS } from '../types';
@@ -40,6 +41,7 @@ export const DiscoverScreen: React.FC = () => {
     mediaType: 'TV', // Preserving Figma initial default
   });
   const [showSortModal, setShowSortModal] = useState(false);
+  const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const { openShowDetails } = useApp();
 
   // Active filter count
@@ -147,20 +149,37 @@ export const DiscoverScreen: React.FC = () => {
           <Feather name="chevron-down" size={14} color={COLORS.primaryDark} />
         </TouchableOpacity>
 
-        {/* Active Filter Count Badge */}
-        {activeFiltersCount > 0 && (
-          <TouchableOpacity
-            style={styles.activeFilterChip}
-            onPress={() => {
-              hapticMedium();
-              setFilters(DEFAULT_DISCOVER_FILTERS);
-            }}
-            activeOpacity={0.75}
+        {/* Filters Drawer Button */}
+        <TouchableOpacity
+          style={[
+            styles.filtersBtn,
+            activeFiltersCount > 0 && styles.filtersBtnActive,
+          ]}
+          onPress={() => {
+            hapticLight();
+            setShowFilterDrawer(true);
+          }}
+          activeOpacity={0.75}
+        >
+          <Feather
+            name="sliders"
+            size={13}
+            color={activeFiltersCount > 0 ? '#FFFFFF' : COLORS.darkGreen}
+          />
+          <Text
+            style={[
+              styles.filtersBtnText,
+              activeFiltersCount > 0 && styles.filtersBtnTextActive,
+            ]}
           >
-            <Text style={styles.activeFilterChipText}>RESET ({activeFiltersCount})</Text>
-            <Feather name="x" size={12} color="#FFFFFF" strokeWidth={2.5} />
-          </TouchableOpacity>
-        )}
+            FILTERS
+          </Text>
+          {activeFiltersCount > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Horizontal Scrolling Genre Carousel */}
@@ -213,6 +232,107 @@ export const DiscoverScreen: React.FC = () => {
           })}
         </ScrollView>
       </View>
+
+      {/* Results Header Counter & Clear All */}
+      <View style={styles.resultsHeaderRow}>
+        <Text style={styles.resultsCounterText}>
+          SHOWING <Text style={styles.resultsCountBold}>{displayItems.length}</Text> OF {INITIAL_SHOWS.length} TITLES
+        </Text>
+        {(activeFiltersCount > 0 || searchQuery.trim().length > 0) && (
+          <TouchableOpacity
+            style={styles.clearAllBtn}
+            onPress={() => {
+              hapticMedium();
+              setSearchQuery('');
+              setFilters(DEFAULT_DISCOVER_FILTERS);
+            }}
+            activeOpacity={0.75}
+          >
+            <Text style={styles.clearAllBtnText}>CLEAR ALL</Text>
+            <Feather name="x" size={12} color={COLORS.primaryDark} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Active Filter Tags Row */}
+      {activeFiltersCount > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.activeTagsScroll}
+          contentContainerStyle={styles.activeTagsContent}
+        >
+          {filters.mediaType !== 'ALL' && (
+            <TouchableOpacity
+              style={styles.activeTag}
+              onPress={() => {
+                hapticLight();
+                setFilters((prev) => ({ ...prev, mediaType: 'ALL' }));
+              }}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.activeTagText}>TYPE: {filters.mediaType.toUpperCase()}</Text>
+              <Feather name="x" size={11} color="#FFFFFF" strokeWidth={2.5} />
+            </TouchableOpacity>
+          )}
+
+          {filters.genre !== 'ALL' && (
+            <TouchableOpacity
+              style={styles.activeTag}
+              onPress={() => {
+                hapticLight();
+                setFilters((prev) => ({ ...prev, genre: 'ALL' }));
+              }}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.activeTagText}>GENRE: {filters.genre.toUpperCase()}</Text>
+              <Feather name="x" size={11} color="#FFFFFF" strokeWidth={2.5} />
+            </TouchableOpacity>
+          )}
+
+          {filters.status !== 'ALL' && (
+            <TouchableOpacity
+              style={styles.activeTag}
+              onPress={() => {
+                hapticLight();
+                setFilters((prev) => ({ ...prev, status: 'ALL' }));
+              }}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.activeTagText}>STATUS: {filters.status.toUpperCase()}</Text>
+              <Feather name="x" size={11} color="#FFFFFF" strokeWidth={2.5} />
+            </TouchableOpacity>
+          )}
+
+          {filters.minRating > 0 && (
+            <TouchableOpacity
+              style={styles.activeTag}
+              onPress={() => {
+                hapticLight();
+                setFilters((prev) => ({ ...prev, minRating: 0 }));
+              }}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.activeTagText}>★ {filters.minRating}+</Text>
+              <Feather name="x" size={11} color="#FFFFFF" strokeWidth={2.5} />
+            </TouchableOpacity>
+          )}
+
+          {filters.sortBy !== 'top_ranked' && (
+            <TouchableOpacity
+              style={styles.activeTag}
+              onPress={() => {
+                hapticLight();
+                setFilters((prev) => ({ ...prev, sortBy: 'top_ranked' }));
+              }}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.activeTagText}>SORT: {SORT_OPTION_LABELS[filters.sortBy].toUpperCase()}</Text>
+              <Feather name="x" size={11} color="#FFFFFF" strokeWidth={2.5} />
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      )}
 
       {/* Cards Grid */}
       <FlatList
@@ -305,6 +425,20 @@ export const DiscoverScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Advanced Filter Drawer Modal */}
+      <DiscoverFilterModal
+        visible={showFilterDrawer}
+        filters={filters}
+        onClose={() => setShowFilterDrawer(false)}
+        onApply={(newFilters) => {
+          setFilters(newFilters);
+          setShowFilterDrawer(false);
+        }}
+        onReset={() => {
+          setFilters(DEFAULT_DISCOVER_FILTERS);
+        }}
+      />
     </View>
   );
 };
@@ -347,20 +481,95 @@ const styles = StyleSheet.create({
     color: COLORS.darkGreen,
     letterSpacing: 0.8,
   },
-  activeFilterChip: {
+  filtersBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.3)',
+    borderRadius: RADIUS.none,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  filtersBtnActive: {
+    backgroundColor: COLORS.darkGreen,
+    borderColor: COLORS.darkGreen,
+  },
+  filtersBtnText: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    color: COLORS.darkGreen,
+    letterSpacing: 0.8,
+  },
+  filtersBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  filterBadge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: RADIUS.none,
+    marginLeft: 2,
+  },
+  filterBadgeText: {
+    fontFamily: FONTS.bold,
+    fontSize: 10,
+    color: COLORS.darkGreen,
+  },
+  resultsHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  resultsCounterText: {
+    fontFamily: FONTS.medium,
+    fontSize: 11.5,
+    color: COLORS.darkGreen,
+    letterSpacing: 0.6,
+  },
+  resultsCountBold: {
+    fontFamily: FONTS.bold,
+    color: COLORS.primaryDark,
+  },
+  clearAllBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: COLORS.primaryDark,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: RADIUS.none,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
   },
-  activeFilterChipText: {
+  clearAllBtnText: {
     fontFamily: FONTS.bold,
     fontSize: 10.5,
-    color: '#FFFFFF',
+    color: COLORS.primaryDark,
     letterSpacing: 0.5,
+  },
+  activeTagsScroll: {
+    marginBottom: 10,
+    maxHeight: 28,
+  },
+  activeTagsContent: {
+    paddingHorizontal: 16,
+    gap: 6,
+    alignItems: 'center',
+  },
+  activeTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: COLORS.darkGreen,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: RADIUS.none,
+  },
+  activeTagText: {
+    fontFamily: FONTS.bold,
+    fontSize: 10,
+    color: '#FFFFFF',
+    letterSpacing: 0.4,
   },
   genresCarouselWrapper: {
     marginBottom: 12,
