@@ -50,6 +50,15 @@ export interface WatchlistItem {
   lastUpdated: string;
 }
 
+export interface FilmographyItem {
+  id: string;
+  showTitle: string;
+  characterName: string;
+  roleType?: string;
+  year?: string | number;
+  posterUrl?: string;
+}
+
 export interface CastMember {
   id: string;
   characterName: string;
@@ -58,6 +67,12 @@ export interface CastMember {
   characterImageUrl: string;
   actorImageUrl: string;
   isVerified: boolean;
+  role?: string;
+  nationality?: string;
+  birthDate?: string;
+  actorBio?: string;
+  characterBio?: string;
+  filmography?: FilmographyItem[];
 }
 
 export interface RankingItem {
