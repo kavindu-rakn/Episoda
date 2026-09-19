@@ -146,3 +146,28 @@ export interface NotificationItem {
 
 export type TabRoute = 'home' | 'watchlist' | 'discover' | 'cast' | 'ranking';
 export type OverlayScreen = null | 'profile' | 'notifications' | 'onboarding' | 'auth';
+
+export type DiscoverSortOption = 
+  | 'top_ranked' 
+  | 'rating_desc' 
+  | 'title_asc' 
+  | 'title_desc' 
+  | 'episodes_desc' 
+  | 'newest';
+
+export interface DiscoverFilterState {
+  mediaType: MediaType | 'ALL';
+  genre: string | 'ALL';
+  status: 'ALL' | 'Airing' | 'Completed';
+  minRating: number;
+  sortBy: DiscoverSortOption;
+}
+
+export const DEFAULT_DISCOVER_FILTERS: DiscoverFilterState = {
+  mediaType: 'ALL',
+  genre: 'ALL',
+  status: 'ALL',
+  minRating: 0,
+  sortBy: 'top_ranked',
+};
+
