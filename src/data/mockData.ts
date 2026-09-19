@@ -1,4 +1,14 @@
-import { Show, WatchlistItem, CastMember, FilmographyItem, RankingItem, UserProfile, NotificationItem } from '../types';
+import { 
+  Show, 
+  WatchlistItem, 
+  CastMember, 
+  FilmographyItem, 
+  RankingItem, 
+  UserProfile, 
+  NotificationItem,
+  AvatarPreset,
+  MilestoneBadge
+} from '../types';
 
 export const INITIAL_SHOWS: Show[] = [
   {
@@ -1363,8 +1373,113 @@ export const INITIAL_RANKINGS: RankingItem[] = [
   { id: 'rank-9', rank: 9, title: 'Demon Slayer', shortTitle: 'Demon Slayer', type: 'Anime', posterUrl: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=400&auto=format&fit=crop&q=80' },
 ];
 
+export const AVATAR_PRESETS: AvatarPreset[] = [
+  {
+    id: 'av-1',
+    name: 'Cyberpunk',
+    url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+    category: 'Cyberpunk',
+  },
+  {
+    id: 'av-2',
+    name: 'Neon Blade',
+    url: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=400&auto=format&fit=crop&q=80',
+    category: 'Anime',
+  },
+  {
+    id: 'av-3',
+    name: 'Shinobi',
+    url: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400&auto=format&fit=crop&q=80',
+    category: 'Shonen',
+  },
+  {
+    id: 'av-4',
+    name: 'Shadow Hunter',
+    url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&auto=format&fit=crop&q=80',
+    category: 'Fantasy',
+  },
+  {
+    id: 'av-5',
+    name: 'Mecha Pilot',
+    url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&auto=format&fit=crop&q=80',
+    category: 'Sci-Fi',
+  },
+  {
+    id: 'av-6',
+    name: 'Retro Sleuth',
+    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    category: 'Retro',
+  },
+  {
+    id: 'av-7',
+    name: 'Cyber Rebel',
+    url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80',
+    category: 'Cyberpunk',
+  },
+  {
+    id: 'av-8',
+    name: 'Flame Alchemist',
+    url: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=400&auto=format&fit=crop&q=80',
+    category: 'Anime',
+  },
+];
+
+export const MILESTONE_BADGES: MilestoneBadge[] = [
+  {
+    id: 'ms-1',
+    title: 'First Broadcast',
+    description: 'Track your very first show in Episoda',
+    icon: 'tv',
+    requiredType: 'shows',
+    targetValue: 1,
+  },
+  {
+    id: 'ms-2',
+    title: 'Binge Novice',
+    description: 'Log 10 or more watched episodes',
+    icon: 'play-circle',
+    requiredType: 'episodes',
+    targetValue: 10,
+  },
+  {
+    id: 'ms-3',
+    title: 'Centurion Watcher',
+    description: 'Reach the 100+ watched episodes milestone',
+    icon: 'award',
+    requiredType: 'episodes',
+    targetValue: 100,
+  },
+  {
+    id: 'ms-4',
+    title: 'Otaku Elite',
+    description: 'Track 10+ anime series in your collection',
+    icon: 'zap',
+    requiredType: 'anime',
+    targetValue: 10,
+  },
+  {
+    id: 'ms-5',
+    title: 'Series Finisher',
+    description: 'Complete 5 full show runs from start to finish',
+    icon: 'check-circle',
+    requiredType: 'completed',
+    targetValue: 5,
+  },
+  {
+    id: 'ms-6',
+    title: 'Marathon Legend',
+    description: 'Accumulate over 100 hours of streaming time',
+    icon: 'clock',
+    requiredType: 'hours',
+    targetValue: 100,
+  },
+];
+
 export const INITIAL_USER_PROFILE: UserProfile = {
   name: 'John Doe',
+  handle: 'johndoe',
+  bio: 'Binging anime and retro sci-fi since 2018 🍿',
+  joinDate: 'Jan 2024',
   birthday: '01 Jan 2001',
   gender: 'Male',
   email: 'johndoe789@gmail.com',

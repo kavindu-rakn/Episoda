@@ -100,11 +100,38 @@ export interface UserStats {
 
 export interface UserProfile {
   name: string;
+  handle?: string;
+  bio?: string;
+  joinDate?: string;
   birthday: string;
   gender: string;
   email: string;
   avatarUrl: string;
   stats: UserStats;
+}
+
+export type StreamingRegion = 'Global' | 'North America' | 'Japan' | 'Europe';
+
+export interface AppSettings {
+  hapticsEnabled: boolean;
+  streamingRegion: StreamingRegion;
+  autoNextEpisode: boolean;
+}
+
+export interface AvatarPreset {
+  id: string;
+  name: string;
+  url: string;
+  category: string;
+}
+
+export interface MilestoneBadge {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  requiredType: 'episodes' | 'hours' | 'shows' | 'anime' | 'completed';
+  targetValue: number;
 }
 
 export interface NotificationItem {

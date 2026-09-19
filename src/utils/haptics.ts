@@ -1,50 +1,52 @@
-﻿import * as Haptics from 'expo-haptics';
+import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
+let _hapticsEnabled = true;
+
+export const setHapticsEnabled = (enabled: boolean) => {
+  _hapticsEnabled = enabled;
+};
+
+export const isHapticsEnabled = () => _hapticsEnabled;
+
 export const hapticLight = async () => {
-  if (Platform.OS !== 'web') {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
-  }
+  if (!_hapticsEnabled || Platform.OS === 'web') return;
+  try {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  } catch (e) {}
 };
 
 export const hapticMedium = async () => {
-  if (Platform.OS !== 'web') {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {}
-  }
+  if (!_hapticsEnabled || Platform.OS === 'web') return;
+  try {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  } catch (e) {}
 };
 
 export const hapticHeavy = async () => {
-  if (Platform.OS !== 'web') {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    } catch (e) {}
-  }
+  if (!_hapticsEnabled || Platform.OS === 'web') return;
+  try {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+  } catch (e) {}
 };
 
 export const hapticSelection = async () => {
-  if (Platform.OS !== 'web') {
-    try {
-      await Haptics.selectionAsync();
-    } catch (e) {}
-  }
+  if (!_hapticsEnabled || Platform.OS === 'web') return;
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
 };
 
 export const hapticSuccess = async () => {
-  if (Platform.OS !== 'web') {
-    try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (e) {}
-  }
+  if (!_hapticsEnabled || Platform.OS === 'web') return;
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } catch (e) {}
 };
 
 export const hapticWarning = async () => {
-  if (Platform.OS !== 'web') {
-    try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } catch (e) {}
-  }
+  if (!_hapticsEnabled || Platform.OS === 'web') return;
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  } catch (e) {}
 };

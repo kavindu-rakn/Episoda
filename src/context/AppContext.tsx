@@ -8,13 +8,21 @@ import {
   UserProfile, 
   NotificationItem, 
   Show,
-  CastMember
+  CastMember,
+  AppSettings,
 } from '../types';
 import { 
   INITIAL_WATCHLIST, 
   INITIAL_USER_PROFILE, 
   INITIAL_NOTIFICATIONS 
 } from '../data/mockData';
+import { setHapticsEnabled } from '../utils/haptics';
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  hapticsEnabled: true,
+  streamingRegion: 'Global',
+  autoNextEpisode: true,
+};
 
 interface AppContextType {
   activeTab: TabRoute;
@@ -29,10 +37,15 @@ interface AppContextType {
   setEpisodeProgress: (id: string, targetCount: number) => void;
   setWatchStatus: (id: string, status: WatchStatus) => void;
   addToWatchlist: (show: Show, status?: WatchStatus, initialEpisodes?: number) => void;
-
   removeFromWatchlist: (id: string) => void;
   userProfile: UserProfile;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
+  settings: AppSettings;
+  updateSettings: (partial: Partial<AppSettings>) => void;
+  resetToSampleData: () => void;
+  clearWatchlist: () => void;
+  exportData: () => string;
+  importData: (jsonString: string) => boolean;
   notifications: NotificationItem[];
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
@@ -52,6 +65,7 @@ const STORAGE_KEYS = {
   PROFILE: '@episoda_profile',
   NOTIFICATIONS: '@episoda_notifications',
   AUTH: '@episoda_auth',
+  SETTINGS: '@episoda_settings',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -60,6 +74,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(INITIAL_WATCHLIST);
   const [userProfile, setUserProfile] = useState<UserProfile>(INITIAL_USER_PROFILE);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
 
@@ -81,22 +96,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSelectedCastMember(null);
   };
 
-
   // Load persisted data on startup
   useEffect(() => {
     (async () => {
       try {
-        const [savedWl, savedProfile, savedNotifs, savedAuth] = await Promise.all([
+        const [savedWl, savedProfile, savedNotifs, savedAuth, savedSettings] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.WATCHLIST),
           AsyncStorage.getItem(STORAGE_KEYS.PROFILE),
           AsyncStorage.getItem(STORAGE_KEYS.NOTIFICATIONS),
           AsyncStorage.getItem(STORAGE_KEYS.AUTH),
+          AsyncStorage.getItem(STORAGE_KEYS.SETTINGS),
         ]);
 
         if (savedWl) setWatchlist(JSON.parse(savedWl));
         if (savedProfile) setUserProfile(JSON.parse(savedProfile));
         if (savedNotifs) setNotifications(JSON.parse(savedNotifs));
         if (savedAuth !== null) setIsAuthenticated(savedAuth === 'true');
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings);
+          setSettings(parsed);
+          setHapticsEnabled(parsed.hapticsEnabled ?? true);
+        }
       } catch (err) {
         console.warn('Error loading stored app state', err);
       }
@@ -235,6 +255,70 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(newProfile)).catch(() => {});
   };
 
+  const updateSettings = (partial: Partial<AppSettings>) => {
+    const updated = { ...settings, ...partial };
+    setSettings(updated);
+    if (partial.hapticsEnabled !== undefined) {
+      setHapticsEnabled(partial.hapticsEnabled);
+    }
+    AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated)).catch(() => {});
+  };
+
+  const resetToSampleData = () => {
+    setWatchlist(INITIAL_WATCHLIST);
+    setUserProfile(INITIAL_USER_PROFILE);
+    setNotifications(INITIAL_NOTIFICATIONS);
+    setSettings(DEFAULT_SETTINGS);
+    setHapticsEnabled(DEFAULT_SETTINGS.hapticsEnabled);
+    AsyncStorage.setItem(STORAGE_KEYS.WATCHLIST, JSON.stringify(INITIAL_WATCHLIST)).catch(() => {});
+    AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(INITIAL_USER_PROFILE)).catch(() => {});
+    AsyncStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(INITIAL_NOTIFICATIONS)).catch(() => {});
+    AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS)).catch(() => {});
+    recalculateStats(INITIAL_WATCHLIST);
+  };
+
+  const clearWatchlist = () => {
+    setWatchlist([]);
+    AsyncStorage.setItem(STORAGE_KEYS.WATCHLIST, JSON.stringify([])).catch(() => {});
+    recalculateStats([]);
+  };
+
+  const exportData = (): string => {
+    const backup = {
+      version: '1.0.0',
+      exportedAt: new Date().toISOString(),
+      watchlist,
+      userProfile,
+      settings,
+    };
+    return JSON.stringify(backup, null, 2);
+  };
+
+  const importData = (jsonString: string): boolean => {
+    try {
+      const data = JSON.parse(jsonString);
+      if (data.watchlist && Array.isArray(data.watchlist)) {
+        setWatchlist(data.watchlist);
+        AsyncStorage.setItem(STORAGE_KEYS.WATCHLIST, JSON.stringify(data.watchlist)).catch(() => {});
+        recalculateStats(data.watchlist);
+      }
+      if (data.userProfile && typeof data.userProfile === 'object') {
+        setUserProfile(data.userProfile);
+        AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(data.userProfile)).catch(() => {});
+      }
+      if (data.settings && typeof data.settings === 'object') {
+        const nextSettings = { ...DEFAULT_SETTINGS, ...data.settings };
+        setSettings(nextSettings);
+        setHapticsEnabled(nextSettings.hapticsEnabled);
+        AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(nextSettings)).catch(() => {});
+      }
+      return true;
+    } catch (e) {
+      console.warn('Failed to parse import data', e);
+      return false;
+    }
+  };
+
   const markNotificationRead = (id: string) => {
     const updated = notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n));
     setNotifications(updated);
@@ -276,10 +360,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setEpisodeProgress,
         setWatchStatus,
         addToWatchlist,
-
         removeFromWatchlist,
         userProfile,
         updateUserProfile,
+        settings,
+        updateSettings,
+        resetToSampleData,
+        clearWatchlist,
+        exportData,
+        importData,
         notifications,
         markNotificationRead,
         markAllNotificationsRead,
@@ -292,7 +381,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         closeCastDetails,
       }}
     >
-
       {children}
     </AppContext.Provider>
   );
