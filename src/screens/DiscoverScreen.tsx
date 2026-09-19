@@ -346,17 +346,21 @@ export const DiscoverScreen: React.FC = () => {
           <MediaCard
             show={item}
             showTitle={true}
+            showRating={true}
+            showTypeBadge={true}
             onPress={() => handlePressCard(item)}
           />
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Feather name="search" size={32} color={COLORS.textMuted} style={styles.emptyIcon} />
+            <View style={styles.emptyIconCircle}>
+              <Feather name="filter" size={26} color={COLORS.primaryDark} />
+            </View>
             <Text style={styles.emptyTitle}>NO MATCHING TITLES</Text>
             <Text style={styles.emptyText}>
-              No titles match your active query or filter criteria.
+              No titles match your active query or filter criteria. Try widening your criteria or clearing filters.
             </Text>
-            {activeFiltersCount > 0 && (
+            {(activeFiltersCount > 0 || searchQuery.trim().length > 0) && (
               <TouchableOpacity
                 style={styles.resetEmptyBtn}
                 onPress={() => {
@@ -366,6 +370,7 @@ export const DiscoverScreen: React.FC = () => {
                 }}
                 activeOpacity={0.8}
               >
+                <Feather name="rotate-ccw" size={14} color="#FFFFFF" />
                 <Text style={styles.resetEmptyBtnText}>RESET ALL FILTERS</Text>
               </TouchableOpacity>
             )}
@@ -611,12 +616,24 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 24,
+    paddingVertical: 36,
+    paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: 'rgba(13, 56, 49, 0.15)',
+    borderRadius: RADIUS.none,
+    marginVertical: 16,
   },
-  emptyIcon: {
+  emptyIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: RADIUS.none,
+    backgroundColor: '#E8F8F5',
+    borderWidth: 1.5,
+    borderColor: COLORS.primaryDark,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
-    opacity: 0.6,
   },
   emptyTitle: {
     fontFamily: FONTS.bold,
@@ -634,9 +651,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   resetEmptyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     backgroundColor: COLORS.primaryDark,
+    borderWidth: 1.5,
+    borderColor: COLORS.darkGreen,
     paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingVertical: 11,
     borderRadius: RADIUS.none,
   },
   resetEmptyBtnText: {
