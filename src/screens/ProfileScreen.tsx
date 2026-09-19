@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -13,15 +13,18 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { AVATAR_PRESETS } from '../data/mockData';
+import { AVATAR_PRESETS, MILESTONE_BADGES, INITIAL_SHOWS } from '../data/mockData';
+import { MilestoneBadge } from '../types';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 import { hapticLight, hapticMedium, hapticSuccess } from '../utils/haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const ProfileScreen: React.FC = () => {
-  const { userProfile, updateUserProfile, logout, setActiveOverlay } = useApp();
+  const { userProfile, updateUserProfile, logout, setActiveOverlay, watchlist } = useApp();
   const [isEditing, setIsEditing] = useState(false);
+  const [activeSectionTab, setActiveSectionTab] = useState<'analytics' | 'milestones'>('analytics');
+
   const [editName, setEditName] = useState(userProfile.name);
   const [editHandle, setEditHandle] = useState(userProfile.handle || 'johndoe');
   const [editBio, setEditBio] = useState(userProfile.bio || '');
@@ -82,6 +85,91 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const { stats } = userProfile;
+
+  // Status Distribution Calculation
+  const completedCount = useMemo(
+    () => watchlist.filter((w) => w.status === 'Completed').length,
+    [watchlist]
+  );
+  const watchingCount = useMemo(
+    () => watchlist.filter((w) => w.status === 'Watching').length,
+    [watchlist]
+  );
+  const planningCount = useMemo(
+    () => watchlist.filter((w) => w.status === 'Planning').length,
+    [watchlist]
+  );
+  const totalWatchlist = watchlist.length || 1;
+
+  const completedPct = Math.round((completedCount / totalWatchlist) * 100);
+  const watchingPct = Math.round((watchingCount / totalWatchlist) * 100);
+  const planningPct = Math.max(0, 100 - completedPct - watchingPct);
+
+  // Genre Distribution Calculation
+  const genreDistribution = useMemo(() => {
+    const counts: Record<string, number> = {};
+    watchlist.forEach((item) => {
+      const match = INITIAL_SHOWS.find(
+        (s) =>
+          s.id === item.showId ||
+          s.title.toLowerCase() === item.title.toLowerCase()
+      );
+      const genres = match?.genres || (item.type === 'Anime' ? ['Anime', 'Action'] : ['TV', 'Drama']);
+      genres.forEach((g) => {
+        counts[g] = (counts[g] || 0) + 1;
+      });
+    });
+
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const totalOccurrences = entries.reduce((acc, curr) => acc + curr[1], 0) || 1;
+    return entries.slice(0, 5).map(([genre, count]) => ({
+      genre,
+      count,
+      pct: Math.round((count / totalOccurrences) * 100),
+    }));
+  }, [watchlist]);
+
+  // Milestone Badges Progress Calculation
+  const milestoneProgressList = useMemo(() => {
+    return MILESTONE_BADGES.map((badge) => {
+      let currentValue = 0;
+      switch (badge.requiredType) {
+        case 'episodes':
+          currentValue = stats.totalEpisodes;
+          break;
+        case 'hours':
+          currentValue = stats.totalHours;
+          break;
+        case 'shows':
+          currentValue = stats.totalCount;
+          break;
+        case 'anime':
+          currentValue = stats.animeCount;
+          break;
+        case 'completed':
+          currentValue = completedCount;
+          break;
+      }
+      const isUnlocked = currentValue >= badge.targetValue;
+      const progressPct = Math.min(100, Math.round((currentValue / badge.targetValue) * 100));
+      return {
+        ...badge,
+        currentValue,
+        isUnlocked,
+        progressPct,
+      };
+    });
+  }, [stats, completedCount]);
+
+  const unlockedMilestonesCount = milestoneProgressList.filter((m) => m.isUnlocked).length;
+
+  const handlePressMilestone = (badge: MilestoneBadge & { currentValue: number; isUnlocked: boolean; progressPct: number }) => {
+    hapticLight();
+    Alert.alert(
+      badge.title,
+      `${badge.description}\n\n• Target: ${badge.targetValue} ${badge.requiredType}\n• Current Progress: ${badge.currentValue} (${badge.progressPct}%)\n• Status: ${badge.isUnlocked ? 'Unlocked 🎉' : 'In Progress ⏳'}`
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -144,7 +232,7 @@ export const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* User Information Table (4 Rows with Solid Dark Green Borders) */}
+        {/* User Information Table (4 Rows with Solid Dark Green Borders - Figma Screen 11) */}
         <View style={styles.infoTable}>
           <View style={styles.infoRow}>
             <Text style={styles.infoText}>Name : {userProfile.name}</Text>
@@ -210,6 +298,175 @@ export const ProfileScreen: React.FC = () => {
             </View>
           </View>
         </View>
+
+        {/* Section Tabs: Deep Analytics & Milestones */}
+        <View style={styles.sectionTabsRow}>
+          <TouchableOpacity
+            style={[styles.sectionTab, activeSectionTab === 'analytics' && styles.sectionTabActive]}
+            onPress={() => {
+              hapticLight();
+              setActiveSectionTab('analytics');
+            }}
+            activeOpacity={0.75}
+          >
+            <Feather 
+              name="bar-chart-2" 
+              size={14} 
+              color={activeSectionTab === 'analytics' ? '#FFFFFF' : COLORS.darkGreen} 
+            />
+            <Text style={[styles.sectionTabText, activeSectionTab === 'analytics' && styles.sectionTabTextActive]}>
+              ANALYTICS
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.sectionTab, activeSectionTab === 'milestones' && styles.sectionTabActive]}
+            onPress={() => {
+              hapticLight();
+              setActiveSectionTab('milestones');
+            }}
+            activeOpacity={0.75}
+          >
+            <Feather 
+              name="award" 
+              size={14} 
+              color={activeSectionTab === 'milestones' ? '#FFFFFF' : COLORS.darkGreen} 
+            />
+            <Text style={[styles.sectionTabText, activeSectionTab === 'milestones' && styles.sectionTabTextActive]}>
+              MILESTONES ({unlockedMilestonesCount}/{MILESTONE_BADGES.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Tab 1: Deep Analytics */}
+        {activeSectionTab === 'analytics' && (
+          <View style={styles.tabContentContainer}>
+            {/* Watchlist Status Distribution */}
+            <View style={styles.analyticsCard}>
+              <Text style={styles.cardHeaderTitle}>STATUS DISTRIBUTION</Text>
+              
+              {/* Segmented Progress Bar */}
+              <View style={styles.statusBarTrack}>
+                {completedCount > 0 && (
+                  <View style={[styles.statusBarSegment, { flex: completedCount, backgroundColor: '#10B981' }]} />
+                )}
+                {watchingCount > 0 && (
+                  <View style={[styles.statusBarSegment, { flex: watchingCount, backgroundColor: COLORS.primary }]} />
+                )}
+                {planningCount > 0 && (
+                  <View style={[styles.statusBarSegment, { flex: planningCount, backgroundColor: '#F59E0B' }]} />
+                )}
+              </View>
+
+              {/* Status Legend */}
+              <View style={styles.statusLegendRow}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+                  <Text style={styles.legendText}>Completed: {completedCount} ({completedPct}%)</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
+                  <Text style={styles.legendText}>Watching: {watchingCount} ({watchingPct}%)</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
+                  <Text style={styles.legendText}>Planning: {planningCount} ({planningPct}%)</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Top Genres Breakdown */}
+            <View style={styles.analyticsCard}>
+              <Text style={styles.cardHeaderTitle}>TOP GENRES IN WATCHLIST</Text>
+              {genreDistribution.length === 0 ? (
+                <Text style={styles.emptyCardText}>No show genres found yet.</Text>
+              ) : (
+                genreDistribution.map((item) => (
+                  <View key={item.genre} style={styles.genreRow}>
+                    <View style={styles.genreInfo}>
+                      <Text style={styles.genreName}>{item.genre}</Text>
+                      <Text style={styles.genreCountBadge}>{item.count} shows</Text>
+                    </View>
+                    <View style={styles.genreBarWrapper}>
+                      <View style={styles.genreBarTrack}>
+                        <View style={[styles.genreBarFill, { width: `${item.pct}%` }]} />
+                      </View>
+                      <Text style={styles.genrePctText}>{item.pct}%</Text>
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+
+            {/* Quick Efficiency Metrics */}
+            <View style={styles.metricsRow}>
+              <View style={styles.metricCard}>
+                <Text style={styles.metricNumber}>{completedPct}%</Text>
+                <Text style={styles.metricLabel}>Completion</Text>
+              </View>
+              <View style={styles.metricCard}>
+                <Text style={styles.metricNumber}>
+                  {(stats.totalEpisodes / (stats.totalCount || 1)).toFixed(1)}
+                </Text>
+                <Text style={styles.metricLabel}>Avg Ep/Show</Text>
+              </View>
+              <View style={styles.metricCard}>
+                <Text style={styles.metricNumber}>
+                  {(stats.totalHours / 24).toFixed(1)}d
+                </Text>
+                <Text style={styles.metricLabel}>Watch Days</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Tab 2: Milestone Badges */}
+        {activeSectionTab === 'milestones' && (
+          <View style={styles.tabContentContainer}>
+            <View style={styles.milestonesGrid}>
+              {milestoneProgressList.map((badge) => (
+                <TouchableOpacity
+                  key={badge.id}
+                  style={[styles.badgeCard, badge.isUnlocked ? styles.badgeCardUnlocked : styles.badgeCardLocked]}
+                  onPress={() => handlePressMilestone(badge)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.badgeHeaderRow}>
+                    <View style={[styles.badgeIconBox, badge.isUnlocked ? styles.badgeIconUnlocked : styles.badgeIconLocked]}>
+                      <Feather 
+                        name={badge.icon as any} 
+                        size={18} 
+                        color={badge.isUnlocked ? '#FFFFFF' : COLORS.textMuted} 
+                      />
+                    </View>
+                    <View style={[styles.badgeStatusPill, badge.isUnlocked ? styles.badgePillUnlocked : styles.badgePillLocked]}>
+                      <Text style={[styles.badgeStatusText, badge.isUnlocked ? styles.badgeStatusTextUnlocked : styles.badgeStatusTextLocked]}>
+                        {badge.isUnlocked ? 'UNLOCKED' : 'LOCKED'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.badgeTitle} numberOfLines={1}>
+                    {badge.title}
+                  </Text>
+                  <Text style={styles.badgeDescription} numberOfLines={2}>
+                    {badge.description}
+                  </Text>
+
+                  {/* Progress bar */}
+                  <View style={styles.badgeProgressWrapper}>
+                    <View style={styles.badgeProgressTrack}>
+                      <View style={[styles.badgeProgressFill, { width: `${badge.progressPct}%` }]} />
+                    </View>
+                    <Text style={styles.badgeProgressText}>
+                      {badge.currentValue} / {badge.targetValue}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Logout Option */}
         <TouchableOpacity
@@ -545,6 +802,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.darkGreen,
     backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.none,
+    marginBottom: 20,
   },
   statsRow: {
     flexDirection: 'row',
@@ -577,12 +835,261 @@ const styles = StyleSheet.create({
     color: COLORS.darkGreen,
     textAlign: 'center',
   },
+  sectionTabsRow: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    gap: 10,
+    marginBottom: 16,
+  },
+  sectionTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.3)',
+    borderRadius: RADIUS.none,
+  },
+  sectionTabActive: {
+    backgroundColor: COLORS.darkGreen,
+    borderColor: COLORS.darkGreen,
+  },
+  sectionTabText: {
+    fontFamily: FONTS.bold,
+    fontSize: 11.5,
+    color: COLORS.darkGreen,
+    letterSpacing: 1,
+  },
+  sectionTabTextActive: {
+    color: '#FFFFFF',
+  },
+  tabContentContainer: {
+    marginHorizontal: 20,
+    marginBottom: 8,
+  },
+  analyticsCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.2)',
+    borderRadius: RADIUS.none,
+    padding: 14,
+    marginBottom: 14,
+  },
+  cardHeaderTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 12.5,
+    color: COLORS.darkGreen,
+    letterSpacing: 1.2,
+    marginBottom: 10,
+  },
+  statusBarTrack: {
+    height: 12,
+    backgroundColor: '#E2E8F0',
+    flexDirection: 'row',
+    overflow: 'hidden',
+    borderRadius: RADIUS.none,
+    marginBottom: 10,
+  },
+  statusBarSegment: {
+    height: '100%',
+  },
+  statusLegendRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    color: COLORS.textPrimary,
+  },
+  emptyCardText: {
+    fontFamily: FONTS.regular,
+    fontSize: 12.5,
+    color: COLORS.textMuted,
+    fontStyle: 'italic',
+  },
+  genreRow: {
+    marginBottom: 10,
+  },
+  genreInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  genreName: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 12.5,
+    color: COLORS.darkGreen,
+  },
+  genreCountBadge: {
+    fontFamily: FONTS.regular,
+    fontSize: 11,
+    color: COLORS.textMuted,
+  },
+  genreBarWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  genreBarTrack: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#E2E8F0',
+    borderRadius: RADIUS.none,
+    overflow: 'hidden',
+  },
+  genreBarFill: {
+    height: '100%',
+    backgroundColor: COLORS.primary,
+  },
+  genrePctText: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    color: COLORS.primaryDark,
+    width: 32,
+    textAlign: 'right',
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 14,
+  },
+  metricCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.2)',
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: RADIUS.none,
+  },
+  metricNumber: {
+    fontFamily: FONTS.bold,
+    fontSize: 17,
+    color: COLORS.primaryDark,
+    marginBottom: 2,
+  },
+  metricLabel: {
+    fontFamily: FONTS.regular,
+    fontSize: 10.5,
+    color: COLORS.darkGreen,
+  },
+  milestonesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  badgeCard: {
+    width: (SCREEN_WIDTH - 52) / 2,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    padding: 12,
+    borderRadius: RADIUS.none,
+  },
+  badgeCardUnlocked: {
+    borderColor: COLORS.primary,
+  },
+  badgeCardLocked: {
+    borderColor: 'rgba(13, 56, 49, 0.2)',
+    opacity: 0.85,
+  },
+  badgeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  badgeIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.none,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeIconUnlocked: {
+    backgroundColor: COLORS.primaryDark,
+  },
+  badgeIconLocked: {
+    backgroundColor: '#E2E8F0',
+  },
+  badgeStatusPill: {
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 2,
+  },
+  badgePillUnlocked: {
+    backgroundColor: '#DCFCE7',
+  },
+  badgePillLocked: {
+    backgroundColor: '#F1F5F9',
+  },
+  badgeStatusText: {
+    fontFamily: FONTS.bold,
+    fontSize: 9,
+    letterSpacing: 0.5,
+  },
+  badgeStatusTextUnlocked: {
+    color: '#15803D',
+  },
+  badgeStatusTextLocked: {
+    color: '#64748B',
+  },
+  badgeTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 12.5,
+    color: COLORS.darkGreen,
+    marginBottom: 3,
+  },
+  badgeDescription: {
+    fontFamily: FONTS.regular,
+    fontSize: 10.5,
+    color: COLORS.textMuted,
+    lineHeight: 14,
+    height: 28,
+    marginBottom: 8,
+  },
+  badgeProgressWrapper: {
+    marginTop: 'auto',
+  },
+  badgeProgressTrack: {
+    height: 5,
+    backgroundColor: '#E2E8F0',
+    overflow: 'hidden',
+    borderRadius: RADIUS.none,
+    marginBottom: 4,
+  },
+  badgeProgressFill: {
+    height: '100%',
+    backgroundColor: COLORS.primary,
+  },
+  badgeProgressText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 10,
+    color: COLORS.darkGreen,
+    textAlign: 'right',
+  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 24,
+    marginTop: 18,
     paddingVertical: 8,
   },
   logoutText: {
