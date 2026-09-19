@@ -42,9 +42,25 @@ export const CastDetailsModal: React.FC = () => {
         selectedCastMember.showTitle.toLowerCase().includes(s.title.toLowerCase()) ||
         s.title.toLowerCase().includes(selectedCastMember.showTitle.toLowerCase())
     );
+    closeCastDetails();
     if (match) {
-      closeCastDetails();
       openShowDetails(match);
+    } else {
+      const showId = selectedCastMember.id.startsWith('jikan-cast-')
+        ? `jikan-${selectedCastMember.id.split('-')[2]}`
+        : selectedCastMember.id.startsWith('tvmaze-cast-')
+        ? `tvmaze-${selectedCastMember.id.split('-')[2]}`
+        : selectedCastMember.id;
+
+      openShowDetails({
+        id: showId,
+        title: selectedCastMember.showTitle,
+        shortTitle: selectedCastMember.showTitle,
+        type: showId.startsWith('jikan-') ? 'Anime' : 'TV',
+        posterUrl: selectedCastMember.characterImageUrl,
+        totalEpisodes: 12,
+        rating: 8.5,
+      });
     }
   };
 
@@ -62,13 +78,14 @@ export const CastDetailsModal: React.FC = () => {
     if (match) {
       openShowDetails(match);
     } else {
+      const isAnime = item.id.startsWith('jikan-');
       const fallbackShow: Show = {
         id: item.id,
         title: item.showTitle,
         shortTitle: item.showTitle,
-        type: 'Anime',
+        type: isAnime ? 'Anime' : 'TV',
         posterUrl: item.posterUrl || selectedCastMember.characterImageUrl,
-        totalEpisodes: '∞',
+        totalEpisodes: 12,
         rating: 8.5,
       };
       openShowDetails(fallbackShow);

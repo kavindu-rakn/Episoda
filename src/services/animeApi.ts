@@ -213,7 +213,7 @@ export async function getAnimeDetails(
               actorBio: `${actorName} is a voice artist who brings ${item.character.name} to life in the ${show.title} animated production.`,
               filmography: [
                 {
-                  id: `film-${malId}`,
+                  id: `jikan-${malId}`,
                   showTitle: show.title,
                   characterName: item.character.name,
                   year: show.year || '2023',

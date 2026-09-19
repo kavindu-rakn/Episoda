@@ -207,7 +207,7 @@ export async function getTVShowDetails(
         actorBio: `${actorName} delivers an acclaimed performance as ${charName} in ${show.title}.`,
         filmography: [
           {
-            id: `film-tvmaze-${tvMazeId}`,
+            id: `tvmaze-${tvMazeId}`,
             showTitle: show.title,
             characterName: charName,
             year: show.year || '2023',
