@@ -7,7 +7,8 @@ import {
   WatchStatus, 
   UserProfile, 
   NotificationItem, 
-  Show 
+  Show,
+  CastMember
 } from '../types';
 import { 
   INITIAL_WATCHLIST, 
@@ -39,6 +40,9 @@ interface AppContextType {
   selectedShow: Show | null;
   openShowDetails: (show: Show) => void;
   closeShowDetails: () => void;
+  selectedCastMember: CastMember | null;
+  openCastDetails: (member: CastMember) => void;
+  closeCastDetails: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -65,6 +69,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const closeShowDetails = () => {
     setSelectedShow(null);
+  };
+
+  const [selectedCastMember, setSelectedCastMember] = useState<CastMember | null>(null);
+
+  const openCastDetails = (member: CastMember) => {
+    setSelectedCastMember(member);
+  };
+
+  const closeCastDetails = () => {
+    setSelectedCastMember(null);
   };
 
 
@@ -273,6 +287,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         selectedShow,
         openShowDetails,
         closeShowDetails,
+        selectedCastMember,
+        openCastDetails,
+        closeCastDetails,
       }}
     >
 

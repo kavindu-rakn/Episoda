@@ -27,6 +27,7 @@ import { LaunchScreen } from './src/screens/LaunchScreen';
 import { COLORS } from './src/constants/theme';
 
 import { ShowDetailsModal } from './src/components/ShowDetailsModal';
+import { CastDetailsModal } from './src/components/CastDetailsModal';
 
 // Keep native splash screen visible while fonts load
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -89,6 +90,7 @@ const MainNavigator: React.FC = () => {
       </View>
       <BottomNav />
       <ShowDetailsModal />
+      <CastDetailsModal />
     </View>
   );
 };
