@@ -1,36 +1,21 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, FlatList, StyleSheet, Alert } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { INITIAL_SHOWS } from '../data/mockData';
 import { MediaCard } from '../components/MediaCard';
 import { Show } from '../types';
 import { COLORS } from '../constants/theme';
+import { hapticLight } from '../utils/haptics';
+
 
 export const HomeScreen: React.FC = () => {
-  const { addToWatchlist, watchlist } = useApp();
+  const { openShowDetails } = useApp();
 
   const handlePressShow = (show: Show) => {
-    const isAlreadyInWl = watchlist.some((item) => item.showId === show.id);
-    if (isAlreadyInWl) {
-      Alert.alert(show.title, 'This show is already in your Watchlist!');
-    } else {
-      Alert.alert(
-        show.title,
-        `Add "${show.title}" to your Watchlist?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Add to Watching',
-            onPress: () => addToWatchlist(show, 'Watching'),
-          },
-          {
-            text: 'Add to Planning',
-            onPress: () => addToWatchlist(show, 'Planning'),
-          },
-        ]
-      );
-    }
+    hapticLight();
+    openShowDetails(show);
   };
+
 
   return (
     <View style={styles.container}>

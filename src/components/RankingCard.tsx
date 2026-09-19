@@ -3,16 +3,24 @@ import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
 import { RankingItem } from '../types';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 
+import { TouchableOpacity } from 'react-native';
+
 interface RankingCardProps {
   item: RankingItem;
+  onPress?: () => void;
 }
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 3;
 
-export const RankingCard: React.FC<RankingCardProps> = ({ item }) => {
+export const RankingCard: React.FC<RankingCardProps> = ({ item, onPress }) => {
   return (
-    <View style={styles.container}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={onPress}
+      activeOpacity={0.85}
+      disabled={!onPress}
+    >
       <View style={styles.imageWrapper}>
         <Image
           source={{ uri: item.posterUrl }}
@@ -33,9 +41,10 @@ export const RankingCard: React.FC<RankingCardProps> = ({ item }) => {
       <Text style={styles.title} numberOfLines={1}>
         {item.shortTitle}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

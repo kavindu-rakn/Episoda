@@ -62,12 +62,14 @@ export interface CastMember {
 
 export interface RankingItem {
   id: string;
+  showId?: string;
   rank: number;
   title: string;
   shortTitle: string;
   type: MediaType;
   posterUrl: string;
 }
+
 
 export interface UserStats {
   animeCount: number;

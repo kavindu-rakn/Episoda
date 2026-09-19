@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   TabRoute, 
@@ -34,6 +34,9 @@ interface AppContextType {
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   unreadCount: number;
+  selectedShow: Show | null;
+  openShowDetails: (show: Show) => void;
+  closeShowDetails: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -52,6 +55,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(INITIAL_WATCHLIST);
   const [userProfile, setUserProfile] = useState<UserProfile>(INITIAL_USER_PROFILE);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [selectedShow, setSelectedShow] = useState<Show | null>(null);
+
+  const openShowDetails = (show: Show) => {
+    setSelectedShow(show);
+  };
+
+  const closeShowDetails = () => {
+    setSelectedShow(null);
+  };
+
 
   // Load persisted data on startup
   useEffect(() => {
@@ -224,8 +237,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         markNotificationRead,
         markAllNotificationsRead,
         unreadCount,
+        selectedShow,
+        openShowDetails,
+        closeShowDetails,
       }}
     >
+
       {children}
     </AppContext.Provider>
   );

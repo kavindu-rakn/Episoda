@@ -26,6 +26,8 @@ import { AuthScreen } from './src/screens/AuthScreen';
 import { LaunchScreen } from './src/screens/LaunchScreen';
 import { COLORS } from './src/constants/theme';
 
+import { ShowDetailsModal } from './src/components/ShowDetailsModal';
+
 // Keep native splash screen visible while fonts load
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -86,9 +88,11 @@ const MainNavigator: React.FC = () => {
         {renderCurrentTab()}
       </View>
       <BottomNav />
+      <ShowDetailsModal />
     </View>
   );
 };
+
 
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
