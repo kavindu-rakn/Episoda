@@ -25,8 +25,10 @@ interface AppContextType {
   logout: () => void;
   watchlist: WatchlistItem[];
   updateEpisodeProgress: (id: string, delta: number) => void;
+  setEpisodeProgress: (id: string, targetCount: number) => void;
   setWatchStatus: (id: string, status: WatchStatus) => void;
-  addToWatchlist: (show: Show, status?: WatchStatus) => void;
+  addToWatchlist: (show: Show, status?: WatchStatus, initialEpisodes?: number) => void;
+
   removeFromWatchlist: (id: string) => void;
   userProfile: UserProfile;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
@@ -123,24 +125,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     recalculateStats(updated);
   };
 
+  const setEpisodeProgress = (id: string, targetCount: number) => {
+    const updated = watchlist.map((item) => {
+      if (item.id !== id) return item;
+      const total = typeof item.totalEpisodes === 'number' ? item.totalEpisodes : 999999;
+      const nextCount = Math.max(0, Math.min(targetCount, total));
+
+      let nextStatus = item.status;
+      if (typeof item.totalEpisodes === 'number' && nextCount >= item.totalEpisodes) {
+        nextStatus = 'Completed';
+      } else if (item.status === 'Completed' && nextCount < total) {
+        nextStatus = 'Watching';
+      } else if (item.status === 'Planning' && nextCount > 0) {
+        nextStatus = 'Watching';
+      }
+
+      return {
+        ...item,
+        watchedEpisodes: nextCount,
+        status: nextStatus,
+        lastUpdated: new Date().toISOString().split('T')[0],
+      };
+    });
+    saveWatchlist(updated);
+    recalculateStats(updated);
+  };
+
   const setWatchStatus = (id: string, status: WatchStatus) => {
     const updated = watchlist.map((item) => (item.id === id ? { ...item, status } : item));
     saveWatchlist(updated);
     recalculateStats(updated);
   };
 
-  const addToWatchlist = (show: Show, status: WatchStatus = 'Watching') => {
+
+  const addToWatchlist = (show: Show, status: WatchStatus = 'Watching', initialEpisodes: number = 0) => {
     const exists = watchlist.find((w) => w.showId === show.id);
     if (exists) return;
+    const isCompleted = typeof show.totalEpisodes === 'number' && initialEpisodes >= show.totalEpisodes;
+    const finalStatus = isCompleted ? 'Completed' : status;
     const newItem: WatchlistItem = {
       id: `wl-${Date.now()}`,
       showId: show.id,
       title: show.title,
       type: show.type,
       posterUrl: show.posterUrl,
-      watchedEpisodes: 0,
+      watchedEpisodes: initialEpisodes,
       totalEpisodes: show.totalEpisodes,
-      status,
+      status: finalStatus,
       lastUpdated: new Date().toISOString().split('T')[0],
     };
     const updated = [newItem, ...watchlist];
@@ -228,8 +259,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         logout,
         watchlist,
         updateEpisodeProgress,
+        setEpisodeProgress,
         setWatchStatus,
         addToWatchlist,
+
         removeFromWatchlist,
         userProfile,
         updateUserProfile,

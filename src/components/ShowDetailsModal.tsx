@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { WatchStatus } from '../types';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
-import { hapticLight, hapticMedium } from '../utils/haptics';
+import { hapticLight, hapticMedium, hapticSuccess } from '../utils/haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -29,11 +29,13 @@ export const ShowDetailsModal: React.FC = () => {
     watchlist, 
     addToWatchlist, 
     setWatchStatus, 
-    removeFromWatchlist 
+    removeFromWatchlist,
+    setEpisodeProgress
   } = useApp();
   const insets = useSafeAreaInsets();
   const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
+  const [selectedSeasonIndex, setSelectedSeasonIndex] = useState(0);
 
   if (!selectedShow) {
     return null;
@@ -44,10 +46,24 @@ export const ShowDetailsModal: React.FC = () => {
   );
   const isInWatchlist = Boolean(watchlistItem);
 
+  const hasSeasons = Boolean(selectedShow.seasons && selectedShow.seasons.length > 0);
+  const safeSeasonIndex = Math.min(selectedSeasonIndex, (selectedShow.seasons?.length || 1) - 1);
+  const currentSeason = hasSeasons ? selectedShow.seasons![safeSeasonIndex] : null;
+  const episodesList = currentSeason?.episodes || selectedShow.episodes || [];
+
+  const previousSeasonsEpisodes = hasSeasons
+    ? selectedShow.seasons!.slice(0, safeSeasonIndex).reduce((sum, s) => sum + s.totalEpisodes, 0)
+    : 0;
+
+  const watchedCount = watchlistItem?.watchedEpisodes || 0;
+  const numericTotal = typeof selectedShow.totalEpisodes === 'number' ? selectedShow.totalEpisodes : 0;
+  const progressPercentage = numericTotal > 0 ? Math.min(100, Math.round((watchedCount / numericTotal) * 100)) : 0;
+
   const handleClose = () => {
     hapticLight();
     setIsSynopsisExpanded(false);
     setShowStatusPicker(false);
+    setSelectedSeasonIndex(0);
     closeShowDetails();
   };
 
@@ -56,7 +72,30 @@ export const ShowDetailsModal: React.FC = () => {
     addToWatchlist(selectedShow, 'Watching');
   };
 
+  const handleToggleEpisode = (epNumber: number) => {
+    const overallEp = previousSeasonsEpisodes + epNumber;
+    let target = overallEp;
+
+    if (watchedCount === overallEp) {
+      target = overallEp - 1;
+      hapticLight();
+    } else {
+      if (numericTotal > 0 && target >= numericTotal) {
+        hapticSuccess();
+      } else {
+        hapticLight();
+      }
+    }
+
+    if (!isInWatchlist) {
+      addToWatchlist(selectedShow, 'Watching', target);
+    } else if (watchlistItem) {
+      setEpisodeProgress(watchlistItem.id, target);
+    }
+  };
+
   const handleChangeStatus = (newStatus: WatchStatus) => {
+
     if (watchlistItem) {
       hapticMedium();
       setWatchStatus(watchlistItem.id, newStatus);
@@ -253,8 +292,101 @@ export const ShowDetailsModal: React.FC = () => {
                 </TouchableOpacity>
               </View>
             )}
+
+            {/* Episodes & Seasons Section */}
+            <View style={styles.episodesSection}>
+              <View style={styles.episodesHeaderRow}>
+                <Text style={styles.sectionHeading}>EPISODES</Text>
+                {numericTotal > 0 && (
+                  <Text style={styles.progressCounterText}>
+                    {watchedCount} / {displayTotal} ({progressPercentage}%)
+                  </Text>
+                )}
+              </View>
+
+              {/* Progress Bar */}
+              {numericTotal > 0 && (
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
+                </View>
+              )}
+
+              {/* Season Tabs (if multi-season) */}
+              {hasSeasons && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.seasonsScroll}
+                >
+                  {selectedShow.seasons!.map((season, idx) => {
+                    const isActive = safeSeasonIndex === idx;
+                    return (
+                      <TouchableOpacity
+                        key={season.id}
+                        style={[styles.seasonTab, isActive && styles.seasonTabActive]}
+                        onPress={() => {
+                          hapticLight();
+                          setSelectedSeasonIndex(idx);
+                        }}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={[styles.seasonTabText, isActive && styles.seasonTabTextActive]}>
+                          {season.title}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              )}
+
+              {/* Episode List */}
+              {episodesList.length === 0 ? (
+                <View style={styles.noEpisodesCard}>
+                  <Text style={styles.noEpisodesText}>Episode list coming soon.</Text>
+                </View>
+              ) : (
+                episodesList.map((ep) => {
+                  const overallEp = previousSeasonsEpisodes + ep.episodeNumber;
+                  const isWatched = watchedCount >= overallEp;
+
+                  return (
+                    <TouchableOpacity
+                      key={ep.id}
+                      style={[styles.episodeCard, isWatched && styles.episodeCardWatched]}
+                      onPress={() => handleToggleEpisode(ep.episodeNumber)}
+                      activeOpacity={0.75}
+                    >
+                      {/* Episode Number Badge */}
+                      <View style={styles.episodeNumWrapper}>
+                        <Text style={styles.episodeNumText}>EP {ep.episodeNumber}</Text>
+                      </View>
+
+                      {/* Title & Info */}
+                      <View style={styles.episodeInfoWrapper}>
+                        <Text style={styles.episodeTitle} numberOfLines={1}>
+                          {ep.title}
+                        </Text>
+                        {(ep.duration || ep.airDate) && (
+                          <Text style={styles.episodeSubtext}>
+                            {ep.duration ? `${ep.duration}` : ''}
+                            {ep.duration && ep.airDate ? ' • ' : ''}
+                            {ep.airDate ? `${ep.airDate}` : ''}
+                          </Text>
+                        )}
+                      </View>
+
+                      {/* Checkmark Button */}
+                      <View style={[styles.episodeCheckBtn, isWatched && styles.episodeCheckBtnWatched]}>
+                        {isWatched && <Feather name="check" size={15} color="#FFFFFF" strokeWidth={3} />}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </View>
           </View>
         </ScrollView>
+
 
         {/* Status Picker Modal */}
         <Modal
@@ -583,6 +715,130 @@ const styles = StyleSheet.create({
   },
   pickerOptionTextActive: {
     color: '#FFFFFF',
+  },
+  episodesSection: {
+    marginTop: 8,
+    marginBottom: 28,
+  },
+  episodesHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  progressCounterText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.primaryDark,
+    letterSpacing: 0.5,
+  },
+  progressTrack: {
+    height: 8,
+    backgroundColor: 'rgba(0, 191, 165, 0.15)',
+    borderRadius: RADIUS.none,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 191, 165, 0.3)',
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: COLORS.primaryDark,
+  },
+  seasonsScroll: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  seasonTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.3)',
+    borderRadius: RADIUS.none,
+  },
+  seasonTabActive: {
+    backgroundColor: COLORS.darkGreen,
+    borderColor: COLORS.darkGreen,
+  },
+  seasonTabText: {
+    fontFamily: FONTS.bold,
+    fontSize: 12.5,
+    color: COLORS.darkGreen,
+    letterSpacing: 1,
+  },
+  seasonTabTextActive: {
+    color: '#FFFFFF',
+  },
+  noEpisodesCard: {
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.15)',
+    borderRadius: RADIUS.none,
+    alignItems: 'center',
+  },
+  noEpisodesText: {
+    fontFamily: FONTS.medium,
+    fontSize: 13,
+    color: COLORS.textMuted,
+  },
+  episodeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.2)',
+    borderRadius: RADIUS.none,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  episodeCardWatched: {
+    backgroundColor: 'rgba(0, 191, 165, 0.06)',
+    borderColor: COLORS.primary,
+  },
+  episodeNumWrapper: {
+    backgroundColor: COLORS.darkGreen,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: RADIUS.none,
+    marginRight: 12,
+  },
+  episodeNumText: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    color: '#FFFFFF',
+    letterSpacing: 0.8,
+  },
+  episodeInfoWrapper: {
+    flex: 1,
+    marginRight: 10,
+  },
+  episodeTitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    marginBottom: 2,
+  },
+  episodeSubtext: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: COLORS.textMuted,
+  },
+  episodeCheckBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: RADIUS.none,
+    borderWidth: 2,
+    borderColor: 'rgba(13, 56, 49, 0.3)',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  episodeCheckBtnWatched: {
+    backgroundColor: COLORS.primaryDark,
+    borderColor: COLORS.primaryDark,
   },
 });
 
