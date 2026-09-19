@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +6,8 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   ScrollView, 
-  Modal 
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { SearchInput } from '../components/SearchInput';
@@ -15,6 +16,7 @@ import { MediaCard } from '../components/MediaCard';
 import { DiscoverFilterModal } from '../components/DiscoverFilterModal';
 import { useApp } from '../context/AppContext';
 import { INITIAL_SHOWS } from '../data/mockData';
+import { searchMedia, clearMediaCache } from '../services/mediaService';
 import { MediaType, Show, DiscoverFilterState, DiscoverSortOption, DEFAULT_DISCOVER_FILTERS } from '../types';
 import { 
   ALL_DISCOVER_GENRES, 
@@ -35,6 +37,11 @@ const SORT_OPTIONS: DiscoverSortOption[] = [
 ];
 
 export const DiscoverScreen: React.FC = () => {
+  const [catalogMode, setCatalogMode] = useState<'local' | 'online'>('local');
+  const [onlineShows, setOnlineShows] = useState<Show[]>([]);
+  const [isLoadingOnline, setIsLoadingOnline] = useState<boolean>(false);
+  const [onlineError, setOnlineError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<DiscoverFilterState>({
     ...DEFAULT_DISCOVER_FILTERS,
@@ -44,17 +51,62 @@ export const DiscoverScreen: React.FC = () => {
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const { openShowDetails } = useApp();
 
+  // When in online mode, fetch search or trending titles
+  useEffect(() => {
+    if (catalogMode !== 'online') return;
+
+    let isMounted = true;
+    setIsLoadingOnline(true);
+    setOnlineError(null);
+
+    const timer = setTimeout(async () => {
+      try {
+        const results = await searchMedia(searchQuery, filters.mediaType);
+        if (isMounted) {
+          setOnlineShows(results);
+          setIsLoadingOnline(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setOnlineError('Live API currently unavailable. Showing local titles.');
+          setIsLoadingOnline(false);
+        }
+      }
+    }, searchQuery.trim().length > 0 ? 350 : 0);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [catalogMode, searchQuery, filters.mediaType]);
+
+  const handleRefreshOnline = async () => {
+    hapticMedium();
+    clearMediaCache();
+    setIsLoadingOnline(true);
+    setOnlineError(null);
+    try {
+      const results = await searchMedia(searchQuery, filters.mediaType);
+      setOnlineShows(results);
+    } catch {
+      setOnlineError('Refresh failed. Showing cached results.');
+    } finally {
+      setIsLoadingOnline(false);
+    }
+  };
+
   // Active filter count
   const activeFiltersCount = useMemo(() => countActiveFilters(filters), [filters]);
 
   // Filtered and sorted display items
   const displayItems = useMemo(() => {
-    // Run full filter and sort engine
-    const processed = filterAndSortShows(INITIAL_SHOWS, searchQuery, filters);
+    const baseShows = catalogMode === 'online' ? onlineShows : INITIAL_SHOWS;
+    const queryForFilter = catalogMode === 'online' ? '' : searchQuery;
+    const processed = filterAndSortShows(baseShows, queryForFilter, filters);
 
-    // If show has seasons and user searched for it specifically, include individual seasons
+    // If show has seasons and user searched for it specifically in local mode, include individual seasons
     const query = searchQuery.trim().toLowerCase();
-    if (query.length > 0) {
+    if (catalogMode === 'local' && query.length > 0) {
       let results: Show[] = [];
       processed.forEach((show) => {
         if (show.seasons && show.seasons.length > 0) {
@@ -77,10 +129,14 @@ export const DiscoverScreen: React.FC = () => {
     }
 
     return processed;
-  }, [searchQuery, filters]);
+  }, [catalogMode, onlineShows, searchQuery, filters]);
 
   const handlePressCard = (show: Show) => {
     hapticLight();
+    if (show.id.startsWith('jikan-') || show.id.startsWith('tvmaze-')) {
+      openShowDetails(show);
+      return;
+    }
     const fullShow =
       INITIAL_SHOWS.find(
         (s) =>
@@ -113,6 +169,69 @@ export const DiscoverScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Title */}
       <Text style={styles.pageTitle}>DISCOVER</Text>
+
+      {/* Mode Switcher: Local Catalog vs Live Online API */}
+      <View style={styles.modeSwitcherRow}>
+        <TouchableOpacity
+          style={[
+            styles.modeButton,
+            catalogMode === 'local' && styles.modeButtonActive,
+          ]}
+          onPress={() => {
+            hapticLight();
+            setCatalogMode('local');
+          }}
+          activeOpacity={0.8}
+        >
+          <Feather
+            name="database"
+            size={12}
+            color={catalogMode === 'local' ? '#FFFFFF' : COLORS.darkGreen}
+          />
+          <Text
+            style={[
+              styles.modeButtonText,
+              catalogMode === 'local' && styles.modeButtonTextActive,
+            ]}
+          >
+            LOCAL CATALOG
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.modeButton,
+            catalogMode === 'online' && styles.modeButtonActive,
+          ]}
+          onPress={() => {
+            hapticLight();
+            setCatalogMode('online');
+          }}
+          activeOpacity={0.8}
+        >
+          <Feather
+            name="zap"
+            size={12}
+            color={catalogMode === 'online' ? '#FFFFFF' : COLORS.darkGreen}
+          />
+          <Text
+            style={[
+              styles.modeButtonText,
+              catalogMode === 'online' && styles.modeButtonTextActive,
+            ]}
+          >
+            LIVE ONLINE API
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Online Error Notice */}
+      {catalogMode === 'online' && onlineError && (
+        <View style={styles.errorNoticeBanner}>
+          <Feather name="alert-circle" size={12} color="#9B2C2C" />
+          <Text style={styles.errorNoticeText}>{onlineError}</Text>
+        </View>
+      )}
 
       {/* Search Bar */}
       <SearchInput
@@ -235,9 +354,34 @@ export const DiscoverScreen: React.FC = () => {
 
       {/* Results Header Counter & Clear All */}
       <View style={styles.resultsHeaderRow}>
-        <Text style={styles.resultsCounterText}>
-          SHOWING <Text style={styles.resultsCountBold}>{displayItems.length}</Text> OF {INITIAL_SHOWS.length} TITLES
-        </Text>
+        <View style={styles.resultsTitleContainer}>
+          <Text style={styles.resultsCounterText}>
+            {catalogMode === 'online' ? (
+              <>
+                LIVE API: <Text style={styles.resultsCountBold}>{displayItems.length}</Text> TITLES
+              </>
+            ) : (
+              <>
+                SHOWING <Text style={styles.resultsCountBold}>{displayItems.length}</Text> OF {INITIAL_SHOWS.length} TITLES
+              </>
+            )}
+          </Text>
+          {catalogMode === 'online' && (
+            <TouchableOpacity
+              style={styles.refreshIconBtn}
+              onPress={handleRefreshOnline}
+              disabled={isLoadingOnline}
+              activeOpacity={0.7}
+            >
+              <Feather
+                name="rotate-cw"
+                size={12}
+                color={COLORS.primaryDark}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+
         {(activeFiltersCount > 0 || searchQuery.trim().length > 0) && (
           <TouchableOpacity
             style={styles.clearAllBtn}
@@ -253,6 +397,14 @@ export const DiscoverScreen: React.FC = () => {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Online Loading Banner */}
+      {catalogMode === 'online' && isLoadingOnline && (
+        <View style={styles.loadingBanner}>
+          <ActivityIndicator size="small" color={COLORS.primaryDark} />
+          <Text style={styles.loadingBannerText}>QUERYING LIVE ANIME & TV APIS...</Text>
+        </View>
+      )}
 
       {/* Active Filter Tags Row */}
       {activeFiltersCount > 0 && (
@@ -460,7 +612,58 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
     textAlign: 'center',
     marginTop: 14,
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  modeSwitcherRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 10,
+  },
+  modeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 7,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.25)',
+    borderRadius: RADIUS.none,
+  },
+  modeButtonActive: {
+    backgroundColor: COLORS.darkGreen,
+    borderColor: COLORS.darkGreen,
+  },
+  modeButtonText: {
+    fontFamily: FONTS.bold,
+    fontSize: 10.5,
+    color: COLORS.darkGreen,
+    letterSpacing: 0.6,
+  },
+  modeButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  errorNoticeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFF5F5',
+    borderWidth: 1,
+    borderColor: '#FEB2B2',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: RADIUS.none,
+  },
+  errorNoticeText: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    color: '#9B2C2C',
   },
   quickBarRow: {
     flexDirection: 'row',
@@ -528,6 +731,37 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     marginBottom: 8,
+  },
+  resultsTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  refreshIconBtn: {
+    padding: 3,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(13, 56, 49, 0.25)',
+    borderRadius: RADIUS.none,
+  },
+  loadingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 7,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    backgroundColor: '#E8F8F5',
+    borderWidth: 1,
+    borderColor: COLORS.primaryDark,
+    borderRadius: RADIUS.none,
+  },
+  loadingBannerText: {
+    fontFamily: FONTS.bold,
+    fontSize: 10.5,
+    color: COLORS.darkGreen,
+    letterSpacing: 0.8,
   },
   resultsCounterText: {
     fontFamily: FONTS.medium,
