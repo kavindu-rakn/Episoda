@@ -14,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
-import { WatchStatus } from '../types';
+import { WatchStatus, CastMember } from '../types';
 import { INITIAL_CAST_MEMBERS } from '../data/mockData';
 import { CastCard } from './CastCard';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
@@ -32,7 +32,8 @@ export const ShowDetailsModal: React.FC = () => {
     addToWatchlist, 
     setWatchStatus, 
     removeFromWatchlist,
-    setEpisodeProgress
+    setEpisodeProgress,
+    openCastDetails,
   } = useApp();
   const insets = useSafeAreaInsets();
   const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
@@ -80,6 +81,12 @@ export const ShowDetailsModal: React.FC = () => {
     setShowStatusPicker(false);
     setSelectedSeasonIndex(0);
     closeShowDetails();
+  };
+
+  const handleOpenCastMember = (member: CastMember) => {
+    hapticMedium();
+    closeShowDetails();
+    openCastDetails(member);
   };
 
   const handleAddToWatchlist = () => {
@@ -411,7 +418,12 @@ export const ShowDetailsModal: React.FC = () => {
                   style={styles.castScrollContainer}
                 >
                   {showCast.map((member) => (
-                    <CastCard key={member.id} member={member} cardWidth={140} />
+                    <CastCard
+                      key={member.id}
+                      member={member}
+                      cardWidth={140}
+                      onPress={() => handleOpenCastMember(member)}
+                    />
                   ))}
                 </ScrollView>
               </View>

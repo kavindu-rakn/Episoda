@@ -1,11 +1,13 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { SearchInput } from '../components/SearchInput';
 import { CastCard } from '../components/CastCard';
+import { useApp } from '../context/AppContext';
 import { INITIAL_CAST_MEMBERS } from '../data/mockData';
 import { COLORS, FONTS } from '../constants/theme';
 
 export const CastScreen: React.FC = () => {
+  const { openCastDetails } = useApp();
   const [searchQuery, setSearchQuery] = useState('Demon Slayer');
 
   const filteredMembers = useMemo(() => {
@@ -41,7 +43,12 @@ export const CastScreen: React.FC = () => {
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => <CastCard member={item} />}
+        renderItem={({ item }) => (
+          <CastCard
+            member={item}
+            onPress={() => openCastDetails(item)}
+          />
+        )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No cast members found for "{searchQuery}"</Text>

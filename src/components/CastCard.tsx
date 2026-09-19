@@ -1,24 +1,26 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { CastMember } from '../types';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
+import { hapticLight } from '../utils/haptics';
 
 interface CastCardProps {
   member: CastMember;
   cardWidth?: number;
   style?: any;
+  onPress?: () => void;
 }
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 44) / 2;
 
-export const CastCard: React.FC<CastCardProps> = ({ member, cardWidth, style }) => {
+export const CastCard: React.FC<CastCardProps> = ({ member, cardWidth, style, onPress }) => {
   const actualWidth = cardWidth || CARD_WIDTH;
   const imageBoxHeight = actualWidth * 0.72;
 
-  return (
-    <View style={[styles.container, cardWidth ? { width: actualWidth, marginBottom: 0 } : null, style]}>
+  const cardContent = (
+    <>
       <View style={[styles.imageBox, cardWidth ? { height: imageBoxHeight } : null]}>
         {/* Left: Character Portrait */}
         <View style={styles.halfImage}>
@@ -55,8 +57,33 @@ export const CastCard: React.FC<CastCardProps> = ({ member, cardWidth, style }) 
       <Text style={styles.caption} numberOfLines={1}>
         {member.characterName} - {member.actorName}
       </Text>
-    </View>
+    </>
   );
+
+  const containerStyle = [
+    styles.container,
+    cardWidth ? { width: actualWidth, marginBottom: 0 } : null,
+    style,
+  ];
+
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        style={containerStyle}
+        activeOpacity={0.75}
+        onPress={() => {
+          hapticLight();
+          onPress();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${member.characterName}, voiced by ${member.actorName}`}
+      >
+        {cardContent}
+      </TouchableOpacity>
+    );
+  }
+
+  return <View style={containerStyle}>{cardContent}</View>;
 };
 
 const styles = StyleSheet.create({
