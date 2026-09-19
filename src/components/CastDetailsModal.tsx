@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,14 +12,17 @@ import {
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
+import { INITIAL_SHOWS } from '../data/mockData';
+import { FilmographyItem, Show } from '../types';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
-import { hapticLight } from '../utils/haptics';
+import { hapticLight, hapticMedium } from '../utils/haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const CastDetailsModal: React.FC = () => {
-  const { selectedCastMember, closeCastDetails } = useApp();
+  const { selectedCastMember, closeCastDetails, openShowDetails } = useApp();
   const insets = useSafeAreaInsets();
+  const [activeBioTab, setActiveBioTab] = useState<'character' | 'actor'>('character');
 
   if (!selectedCastMember) {
     return null;
@@ -29,6 +32,56 @@ export const CastDetailsModal: React.FC = () => {
     hapticLight();
     closeCastDetails();
   };
+
+  const handlePressCurrentShow = () => {
+    hapticMedium();
+    const match = INITIAL_SHOWS.find(
+      (s) =>
+        s.title.toLowerCase() === selectedCastMember.showTitle.toLowerCase() ||
+        (s.shortTitle && s.shortTitle.toLowerCase() === selectedCastMember.showTitle.toLowerCase()) ||
+        selectedCastMember.showTitle.toLowerCase().includes(s.title.toLowerCase()) ||
+        s.title.toLowerCase().includes(selectedCastMember.showTitle.toLowerCase())
+    );
+    if (match) {
+      closeCastDetails();
+      openShowDetails(match);
+    }
+  };
+
+  const handlePressFilmography = (item: FilmographyItem) => {
+    hapticMedium();
+    const match = INITIAL_SHOWS.find(
+      (s) =>
+        s.title.toLowerCase() === item.showTitle.toLowerCase() ||
+        (s.shortTitle && s.shortTitle.toLowerCase() === item.showTitle.toLowerCase()) ||
+        item.showTitle.toLowerCase().includes(s.title.toLowerCase()) ||
+        s.title.toLowerCase().includes(item.showTitle.toLowerCase())
+    );
+
+    closeCastDetails();
+    if (match) {
+      openShowDetails(match);
+    } else {
+      const fallbackShow: Show = {
+        id: item.id,
+        title: item.showTitle,
+        shortTitle: item.showTitle,
+        type: 'Anime',
+        posterUrl: item.posterUrl || selectedCastMember.characterImageUrl,
+        totalEpisodes: '∞',
+        rating: 8.5,
+      };
+      openShowDetails(fallbackShow);
+    }
+  };
+
+  const characterBioText =
+    selectedCastMember.characterBio ||
+    `${selectedCastMember.characterName} is a prominent figure in ${selectedCastMember.showTitle}, brought to life with distinct personality, emotional depth, and memorable dialogue.`;
+
+  const actorBioText =
+    selectedCastMember.actorBio ||
+    `${selectedCastMember.actorName} is a celebrated voice artist and actor whose performances across television, animation, and video games have earned widespread critical acclaim.`;
 
   return (
     <Modal
@@ -106,14 +159,24 @@ export const CastDetailsModal: React.FC = () => {
               )}
             </View>
 
-            {/* Character Spotlight Banner */}
-            <View style={styles.spotlightCard}>
-              <Text style={styles.spotlightLabel}>PORTRAYING / VOICING</Text>
+            {/* Character Spotlight Banner with Jump-to-Show capability */}
+            <TouchableOpacity
+              style={styles.spotlightCard}
+              onPress={handlePressCurrentShow}
+              activeOpacity={0.8}
+            >
+              <View style={styles.spotlightHeaderRow}>
+                <Text style={styles.spotlightLabel}>PORTRAYING / VOICING</Text>
+                <View style={styles.viewShowPill}>
+                  <Text style={styles.viewShowText}>VIEW SHOW</Text>
+                  <Feather name="arrow-right" size={11} color={COLORS.primaryDark} />
+                </View>
+              </View>
               <Text style={styles.spotlightCharacter}>
                 {selectedCastMember.characterName}
                 <Text style={styles.spotlightShow}> in {selectedCastMember.showTitle}</Text>
               </Text>
-            </View>
+            </TouchableOpacity>
 
             {/* Key Information Badges */}
             <View style={styles.badgesRow}>
@@ -137,6 +200,96 @@ export const CastDetailsModal: React.FC = () => {
                 </View>
               )}
             </View>
+
+            {/* Biography Segmented Switcher */}
+            <View style={styles.bioTabsRow}>
+              <TouchableOpacity
+                style={[styles.bioTab, activeBioTab === 'character' && styles.bioTabActive]}
+                onPress={() => {
+                  hapticLight();
+                  setActiveBioTab('character');
+                }}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.bioTabText, activeBioTab === 'character' && styles.bioTabTextActive]}>
+                  CHARACTER STORY
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.bioTab, activeBioTab === 'actor' && styles.bioTabActive]}
+                onPress={() => {
+                  hapticLight();
+                  setActiveBioTab('actor');
+                }}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.bioTabText, activeBioTab === 'actor' && styles.bioTabTextActive]}>
+                  ACTOR BIOGRAPHY
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Bio Content Box */}
+            <View style={styles.bioContentCard}>
+              <Text style={styles.bioText}>
+                {activeBioTab === 'character' ? characterBioText : actorBioText}
+              </Text>
+            </View>
+
+            {/* Known For / Filmography Section */}
+            {selectedCastMember.filmography && selectedCastMember.filmography.length > 0 && (
+              <View style={styles.filmographySection}>
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={styles.sectionHeading}>KNOWN FOR / FILMOGRAPHY</Text>
+                  <Text style={styles.filmographyCount}>
+                    {selectedCastMember.filmography.length} CREDITS
+                  </Text>
+                </View>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.filmographyScroll}
+                  style={styles.filmographyScrollContainer}
+                >
+                  {selectedCastMember.filmography.map((item) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.filmCard}
+                      onPress={() => handlePressFilmography(item)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.filmPosterWrapper}>
+                        <Image
+                          source={{ uri: item.posterUrl || selectedCastMember.characterImageUrl }}
+                          style={styles.filmPosterImage}
+                          resizeMode="cover"
+                        />
+                        {item.year && (
+                          <View style={styles.filmYearBadge}>
+                            <Text style={styles.filmYearText}>{item.year}</Text>
+                          </View>
+                        )}
+                        <View style={styles.filmBorderOverlay} />
+                      </View>
+
+                      <Text style={styles.filmTitle} numberOfLines={1}>
+                        {item.showTitle}
+                      </Text>
+                      <Text style={styles.filmCharacter} numberOfLines={1}>
+                        {item.characterName}
+                      </Text>
+                      {item.roleType && (
+                        <Text style={styles.filmRole} numberOfLines={1}>
+                          {item.roleType}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
         </ScrollView>
       </View>
@@ -267,12 +420,34 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 14,
   },
+  spotlightHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  viewShowPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF9',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: COLORS.primaryDark,
+    borderRadius: RADIUS.none,
+    gap: 4,
+  },
+  viewShowText: {
+    fontFamily: FONTS.bold,
+    fontSize: 10,
+    color: COLORS.primaryDark,
+    letterSpacing: 0.8,
+  },
   spotlightLabel: {
     fontFamily: FONTS.bold,
     fontSize: 10.5,
     color: COLORS.primaryDark,
     letterSpacing: 1.5,
-    marginBottom: 2,
   },
   spotlightCharacter: {
     fontFamily: FONTS.bold,
@@ -289,7 +464,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   roleBadge: {
     backgroundColor: COLORS.primaryDark,
@@ -317,5 +492,135 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     fontSize: 12,
     color: COLORS.darkGreen,
+  },
+  bioTabsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  bioTab: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.3)',
+    borderRadius: RADIUS.none,
+  },
+  bioTabActive: {
+    backgroundColor: COLORS.darkGreen,
+    borderColor: COLORS.darkGreen,
+  },
+  bioTabText: {
+    fontFamily: FONTS.bold,
+    fontSize: 11.5,
+    color: COLORS.darkGreen,
+    letterSpacing: 1,
+  },
+  bioTabTextActive: {
+    color: '#FFFFFF',
+  },
+  bioContentCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.2)',
+    borderRadius: RADIUS.none,
+    padding: 14,
+    marginBottom: 24,
+  },
+  bioText: {
+    fontFamily: FONTS.regular,
+    fontSize: 13.5,
+    color: COLORS.textPrimary,
+    lineHeight: 21,
+  },
+  filmographySection: {
+    marginBottom: 24,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  sectionHeading: {
+    fontFamily: FONTS.bold,
+    fontSize: 14.5,
+    color: COLORS.darkGreen,
+    letterSpacing: 1.5,
+  },
+  filmographyCount: {
+    fontFamily: FONTS.bold,
+    fontSize: 11.5,
+    color: COLORS.primaryDark,
+    letterSpacing: 0.8,
+  },
+  filmographyScrollContainer: {
+    marginHorizontal: -20,
+  },
+  filmographyScroll: {
+    paddingHorizontal: 20,
+    gap: 12,
+    paddingTop: 2,
+    paddingBottom: 4,
+  },
+  filmCard: {
+    width: 124,
+  },
+  filmPosterWrapper: {
+    width: 124,
+    height: 168,
+    backgroundColor: '#000000',
+    overflow: 'hidden',
+    borderRadius: RADIUS.none,
+    position: 'relative',
+    marginBottom: 6,
+  },
+  filmPosterImage: {
+    width: '100%',
+    height: '100%',
+  },
+  filmYearBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: RADIUS.none,
+  },
+  filmYearText: {
+    fontFamily: FONTS.bold,
+    fontSize: 10,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  filmBorderOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderWidth: BORDERS.teal,
+    borderColor: COLORS.primary,
+    borderRadius: RADIUS.none,
+  },
+  filmTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 12.5,
+    color: COLORS.darkGreen,
+    marginBottom: 1,
+  },
+  filmCharacter: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11.5,
+    color: COLORS.primaryDark,
+    marginBottom: 1,
+  },
+  filmRole: {
+    fontFamily: FONTS.regular,
+    fontSize: 10.5,
+    color: COLORS.textMuted,
   },
 });
