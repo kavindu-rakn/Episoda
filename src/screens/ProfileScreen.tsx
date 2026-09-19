@@ -10,21 +10,45 @@ import {
   TextInput,
   Modal,
   Dimensions,
+  Switch,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { AVATAR_PRESETS, MILESTONE_BADGES, INITIAL_SHOWS } from '../data/mockData';
-import { MilestoneBadge } from '../types';
+import { MilestoneBadge, StreamingRegion } from '../types';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 import { hapticLight, hapticMedium, hapticSuccess } from '../utils/haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export const ProfileScreen: React.FC = () => {
-  const { userProfile, updateUserProfile, logout, setActiveOverlay, watchlist } = useApp();
-  const [isEditing, setIsEditing] = useState(false);
-  const [activeSectionTab, setActiveSectionTab] = useState<'analytics' | 'milestones'>('analytics');
+const REGION_OPTIONS: StreamingRegion[] = ['Global', 'North America', 'Japan', 'Europe'];
 
+export const ProfileScreen: React.FC = () => {
+  const { 
+    userProfile, 
+    updateUserProfile, 
+    logout, 
+    setActiveOverlay, 
+    watchlist,
+    settings,
+    updateSettings,
+    resetToSampleData,
+    clearWatchlist,
+    exportData,
+    importData,
+  } = useApp();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeSectionTab, setActiveSectionTab] = useState<'analytics' | 'milestones' | 'settings'>('analytics');
+
+  // Modals for settings
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showRegionModal, setShowRegionModal] = useState(false);
+  const [exportedJsonText, setExportedJsonText] = useState('');
+  const [importJsonText, setImportJsonText] = useState('');
+
+  // Profile Edit State
   const [editName, setEditName] = useState(userProfile.name);
   const [editHandle, setEditHandle] = useState(userProfile.handle || 'johndoe');
   const [editBio, setEditBio] = useState(userProfile.bio || '');
@@ -171,6 +195,76 @@ export const ProfileScreen: React.FC = () => {
     );
   };
 
+  // Settings Handlers
+  const handleOpenExport = () => {
+    hapticMedium();
+    const data = exportData();
+    setExportedJsonText(data);
+    setShowExportModal(true);
+  };
+
+  const handleOpenImport = () => {
+    hapticLight();
+    setImportJsonText('');
+    setShowImportModal(true);
+  };
+
+  const handleExecuteImport = () => {
+    if (!importJsonText.trim()) {
+      Alert.alert('Error', 'Please enter backup JSON data.');
+      return;
+    }
+    const success = importData(importJsonText.trim());
+    if (success) {
+      hapticSuccess();
+      setShowImportModal(false);
+      setImportJsonText('');
+      Alert.alert('Success', 'Watchlist and settings restored successfully!');
+    } else {
+      Alert.alert('Error', 'Invalid backup format. Please verify the JSON string.');
+    }
+  };
+
+  const handleResetSampleData = () => {
+    hapticMedium();
+    Alert.alert(
+      'Restore Sample Catalog',
+      'This will reset your watchlist, preferences, and profile back to sample initial data. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Restore',
+          style: 'destructive',
+          onPress: () => {
+            resetToSampleData();
+            hapticSuccess();
+            Alert.alert('Reset Complete', 'Default catalog and sample watchlist restored.');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleClearWatchlist = () => {
+    hapticMedium();
+    Alert.alert(
+      'Clear Watchlist',
+      'Are you sure you want to remove all shows from your watchlist? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: () => {
+            clearWatchlist();
+            hapticSuccess();
+            Alert.alert('Cleared', 'Your watchlist has been cleared.');
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* Title Header */}
@@ -299,7 +393,7 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Section Tabs: Deep Analytics & Milestones */}
+        {/* Section Tabs: Deep Analytics, Milestones & Settings */}
         <View style={styles.sectionTabsRow}>
           <TouchableOpacity
             style={[styles.sectionTab, activeSectionTab === 'analytics' && styles.sectionTabActive]}
@@ -311,7 +405,7 @@ export const ProfileScreen: React.FC = () => {
           >
             <Feather 
               name="bar-chart-2" 
-              size={14} 
+              size={13} 
               color={activeSectionTab === 'analytics' ? '#FFFFFF' : COLORS.darkGreen} 
             />
             <Text style={[styles.sectionTabText, activeSectionTab === 'analytics' && styles.sectionTabTextActive]}>
@@ -329,11 +423,29 @@ export const ProfileScreen: React.FC = () => {
           >
             <Feather 
               name="award" 
-              size={14} 
+              size={13} 
               color={activeSectionTab === 'milestones' ? '#FFFFFF' : COLORS.darkGreen} 
             />
             <Text style={[styles.sectionTabText, activeSectionTab === 'milestones' && styles.sectionTabTextActive]}>
-              MILESTONES ({unlockedMilestonesCount}/{MILESTONE_BADGES.length})
+              BADGES ({unlockedMilestonesCount})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.sectionTab, activeSectionTab === 'settings' && styles.sectionTabActive]}
+            onPress={() => {
+              hapticLight();
+              setActiveSectionTab('settings');
+            }}
+            activeOpacity={0.75}
+          >
+            <Feather 
+              name="settings" 
+              size={13} 
+              color={activeSectionTab === 'settings' ? '#FFFFFF' : COLORS.darkGreen} 
+            />
+            <Text style={[styles.sectionTabText, activeSectionTab === 'settings' && styles.sectionTabTextActive]}>
+              SETTINGS
             </Text>
           </TouchableOpacity>
         </View>
@@ -464,6 +576,155 @@ export const ProfileScreen: React.FC = () => {
                   </View>
                 </TouchableOpacity>
               ))}
+            </View>
+          </View>
+        )}
+
+        {/* Tab 3: Settings Suite */}
+        {activeSectionTab === 'settings' && (
+          <View style={styles.tabContentContainer}>
+            {/* Preferences Group */}
+            <View style={styles.settingsGroupCard}>
+              <Text style={styles.settingsGroupTitle}>APP PREFERENCES</Text>
+
+              {/* Haptic Feedback Toggle */}
+              <View style={styles.settingsItemRow}>
+                <View style={styles.settingsItemInfo}>
+                  <Text style={styles.settingsItemLabel}>Haptic Feedback</Text>
+                  <Text style={styles.settingsItemSubtext}>Tactile vibrations on button clicks</Text>
+                </View>
+                <Switch
+                  value={settings.hapticsEnabled}
+                  onValueChange={(val) => {
+                    hapticLight();
+                    updateSettings({ hapticsEnabled: val });
+                  }}
+                  trackColor={{ false: '#E2E8F0', true: COLORS.primaryDark }}
+                  thumbColor={settings.hapticsEnabled ? '#FFFFFF' : '#CBD5E1'}
+                />
+              </View>
+
+              {/* Streaming Region */}
+              <TouchableOpacity
+                style={styles.settingsItemRow}
+                onPress={() => {
+                  hapticLight();
+                  setShowRegionModal(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.settingsItemInfo}>
+                  <Text style={styles.settingsItemLabel}>Preferred Streaming Region</Text>
+                  <Text style={styles.settingsItemSubtext}>Release calendars and availability source</Text>
+                </View>
+                <View style={styles.regionBadge}>
+                  <Text style={styles.regionBadgeText}>{settings.streamingRegion}</Text>
+                  <Feather name="chevron-down" size={14} color={COLORS.primaryDark} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Auto Next Episode */}
+              <View style={[styles.settingsItemRow, styles.lastSettingsItem]}>
+                <View style={styles.settingsItemInfo}>
+                  <Text style={styles.settingsItemLabel}>Auto-Next Episode</Text>
+                  <Text style={styles.settingsItemSubtext}>Advance episodes when completing series</Text>
+                </View>
+                <Switch
+                  value={settings.autoNextEpisode}
+                  onValueChange={(val) => {
+                    hapticLight();
+                    updateSettings({ autoNextEpisode: val });
+                  }}
+                  trackColor={{ false: '#E2E8F0', true: COLORS.primaryDark }}
+                  thumbColor={settings.autoNextEpisode ? '#FFFFFF' : '#CBD5E1'}
+                />
+              </View>
+            </View>
+
+            {/* Data & Storage Management Group */}
+            <View style={styles.settingsGroupCard}>
+              <Text style={styles.settingsGroupTitle}>DATA & BACKUP</Text>
+
+              {/* Export Backup */}
+              <TouchableOpacity
+                style={styles.settingsActionRow}
+                onPress={handleOpenExport}
+                activeOpacity={0.7}
+              >
+                <View style={styles.actionIconWrapper}>
+                  <Feather name="download" size={16} color={COLORS.darkGreen} />
+                </View>
+                <View style={styles.actionTextWrapper}>
+                  <Text style={styles.actionTitle}>Export Watchlist Backup</Text>
+                  <Text style={styles.actionSubtext}>Save JSON backup to clipboard or storage</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={COLORS.textMuted} />
+              </TouchableOpacity>
+
+              {/* Import Backup */}
+              <TouchableOpacity
+                style={styles.settingsActionRow}
+                onPress={handleOpenImport}
+                activeOpacity={0.7}
+              >
+                <View style={styles.actionIconWrapper}>
+                  <Feather name="upload" size={16} color={COLORS.darkGreen} />
+                </View>
+                <View style={styles.actionTextWrapper}>
+                  <Text style={styles.actionTitle}>Import Watchlist Backup</Text>
+                  <Text style={styles.actionSubtext}>Restore watchlist & stats from JSON</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={COLORS.textMuted} />
+              </TouchableOpacity>
+
+              {/* Reset to Default */}
+              <TouchableOpacity
+                style={styles.settingsActionRow}
+                onPress={handleResetSampleData}
+                activeOpacity={0.7}
+              >
+                <View style={styles.actionIconWrapper}>
+                  <Feather name="refresh-cw" size={16} color={COLORS.darkGreen} />
+                </View>
+                <View style={styles.actionTextWrapper}>
+                  <Text style={styles.actionTitle}>Restore Default Catalog</Text>
+                  <Text style={styles.actionSubtext}>Reset to default sample shows & cast</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={COLORS.textMuted} />
+              </TouchableOpacity>
+
+              {/* Clear Watchlist */}
+              <TouchableOpacity
+                style={[styles.settingsActionRow, styles.lastSettingsItem]}
+                onPress={handleClearWatchlist}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.actionIconWrapper, { backgroundColor: '#FEE2E2' }]}>
+                  <Feather name="trash-2" size={16} color="#DC2626" />
+                </View>
+                <View style={styles.actionTextWrapper}>
+                  <Text style={[styles.actionTitle, { color: '#DC2626' }]}>Clear All Watchlist Data</Text>
+                  <Text style={styles.actionSubtext}>Wipe watch history and tracking progress</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* About Episoda Group */}
+            <View style={styles.settingsGroupCard}>
+              <Text style={styles.settingsGroupTitle}>ABOUT EPISODA</Text>
+              <View style={styles.aboutRow}>
+                <Text style={styles.aboutLabel}>Version</Text>
+                <Text style={styles.aboutValue}>1.0.0 (Expo SDK 54)</Text>
+              </View>
+              <View style={styles.aboutRow}>
+                <Text style={styles.aboutLabel}>Architecture</Text>
+                <Text style={styles.aboutValue}>React Native 0.81.5 • Hermes</Text>
+              </View>
+              <View style={[styles.aboutRow, styles.lastSettingsItem]}>
+                <Text style={styles.aboutLabel}>Design System</Text>
+                <Text style={styles.aboutValue}>Neobrutalist Anime & TV</Text>
+              </View>
             </View>
           </View>
         )}
@@ -652,6 +913,152 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Export Backup Modal */}
+      <Modal
+        visible={showExportModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowExportModal(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>BACKUP DATA</Text>
+              <TouchableOpacity
+                onPress={() => setShowExportModal(false)}
+                style={styles.modalCloseBtn}
+              >
+                <Feather name="x" size={20} color={COLORS.darkGreen} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.exportModalDesc}>
+              Select and copy the JSON string below to save or transfer your profile and watchlist:
+            </Text>
+
+            <TextInput
+              style={styles.exportTextInput}
+              value={exportedJsonText}
+              multiline
+              editable={false}
+              selectTextOnFocus
+            />
+
+            <TouchableOpacity
+              style={[styles.modalBtn, styles.modalBtnSave, { marginTop: 12 }]}
+              onPress={() => {
+                hapticLight();
+                setShowExportModal(false);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalBtnTextSave}>DONE</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Import Backup Modal */}
+      <Modal
+        visible={showImportModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowImportModal(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>RESTORE BACKUP</Text>
+              <TouchableOpacity
+                onPress={() => setShowImportModal(false)}
+                style={styles.modalCloseBtn}
+              >
+                <Feather name="x" size={20} color={COLORS.darkGreen} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.exportModalDesc}>
+              Paste your exported JSON backup string below:
+            </Text>
+
+            <TextInput
+              style={[styles.exportTextInput, { height: 160 }]}
+              value={importJsonText}
+              onChangeText={setImportJsonText}
+              multiline
+              placeholder="Paste JSON here..."
+              placeholderTextColor={COLORS.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalBtnCancel]}
+                onPress={() => setShowImportModal(false)}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.modalBtnTextCancel}>CANCEL</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalBtnSave]}
+                onPress={handleExecuteImport}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalBtnTextSave}>RESTORE</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Streaming Region Selection Modal */}
+      <Modal
+        visible={showRegionModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRegionModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setShowRegionModal(false)}
+        >
+          <View style={[styles.modalContent, { maxHeight: 340 }]}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>SELECT REGION</Text>
+              <TouchableOpacity
+                onPress={() => setShowRegionModal(false)}
+                style={styles.modalCloseBtn}
+              >
+                <Feather name="x" size={20} color={COLORS.darkGreen} />
+              </TouchableOpacity>
+            </View>
+
+            {REGION_OPTIONS.map((region) => {
+              const isCurrent = settings.streamingRegion === region;
+              return (
+                <TouchableOpacity
+                  key={region}
+                  style={[styles.regionOptionRow, isCurrent && styles.regionOptionRowActive]}
+                  onPress={() => {
+                    hapticLight();
+                    updateSettings({ streamingRegion: region });
+                    setShowRegionModal(false);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[styles.regionOptionText, isCurrent && styles.regionOptionTextActive]}>
+                    {region}
+                  </Text>
+                  {isCurrent && <Feather name="check" size={18} color={COLORS.primaryDark} strokeWidth={3} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -838,7 +1245,7 @@ const styles = StyleSheet.create({
   sectionTabsRow: {
     flexDirection: 'row',
     marginHorizontal: 20,
-    gap: 10,
+    gap: 8,
     marginBottom: 16,
   },
   sectionTab: {
@@ -846,8 +1253,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
+    gap: 5,
+    paddingVertical: 9,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: 'rgba(13, 56, 49, 0.3)',
@@ -859,9 +1266,9 @@ const styles = StyleSheet.create({
   },
   sectionTabText: {
     fontFamily: FONTS.bold,
-    fontSize: 11.5,
+    fontSize: 11,
     color: COLORS.darkGreen,
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   sectionTabTextActive: {
     color: '#FFFFFF',
@@ -1084,6 +1491,111 @@ const styles = StyleSheet.create({
     color: COLORS.darkGreen,
     textAlign: 'right',
   },
+  settingsGroupCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.2)',
+    borderRadius: RADIUS.none,
+    padding: 14,
+    marginBottom: 14,
+  },
+  settingsGroupTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 12.5,
+    color: COLORS.darkGreen,
+    letterSpacing: 1.2,
+    marginBottom: 12,
+  },
+  settingsItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(13, 56, 49, 0.1)',
+  },
+  lastSettingsItem: {
+    borderBottomWidth: 0,
+    paddingBottom: 2,
+  },
+  settingsItemInfo: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  settingsItemLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13.5,
+    color: COLORS.darkGreen,
+    marginBottom: 2,
+  },
+  settingsItemSubtext: {
+    fontFamily: FONTS.regular,
+    fontSize: 11,
+    color: COLORS.textMuted,
+  },
+  regionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: COLORS.primaryDark,
+    borderRadius: RADIUS.none,
+    backgroundColor: '#F0FDF9',
+  },
+  regionBadgeText: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    color: COLORS.primaryDark,
+  },
+  settingsActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(13, 56, 49, 0.1)',
+  },
+  actionIconWrapper: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#E8F8F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderRadius: RADIUS.none,
+  },
+  actionTextWrapper: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: COLORS.darkGreen,
+  },
+  actionSubtext: {
+    fontFamily: FONTS.regular,
+    fontSize: 10.5,
+    color: COLORS.textMuted,
+  },
+  aboutRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(13, 56, 49, 0.1)',
+  },
+  aboutLabel: {
+    fontFamily: FONTS.medium,
+    fontSize: 12,
+    color: COLORS.darkGreen,
+  },
+  aboutValue: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 11.5,
+    color: COLORS.primaryDark,
+  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1265,5 +1777,45 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: '#FFFFFF',
     letterSpacing: 1,
+  },
+  exportModalDesc: {
+    fontFamily: FONTS.regular,
+    fontSize: 12.5,
+    color: COLORS.textMuted,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  exportTextInput: {
+    height: 180,
+    backgroundColor: '#F8FAF9',
+    borderWidth: 1.5,
+    borderColor: 'rgba(13, 56, 49, 0.3)',
+    borderRadius: RADIUS.none,
+    padding: 10,
+    fontFamily: 'monospace',
+    fontSize: 11,
+    color: COLORS.darkGreen,
+    textAlignVertical: 'top',
+  },
+  regionOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(13, 56, 49, 0.1)',
+  },
+  regionOptionRowActive: {
+    backgroundColor: '#E8F8F5',
+  },
+  regionOptionText: {
+    fontFamily: FONTS.medium,
+    fontSize: 14,
+    color: COLORS.darkGreen,
+  },
+  regionOptionTextActive: {
+    fontFamily: FONTS.bold,
+    color: COLORS.primaryDark,
   },
 });
