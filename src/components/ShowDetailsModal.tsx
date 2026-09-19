@@ -8,29 +8,80 @@ import {
   StyleSheet,
   Modal,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
+import { WatchStatus } from '../types';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
-import { hapticLight } from '../utils/haptics';
+import { hapticLight, hapticMedium } from '../utils/haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+const STATUS_OPTIONS: WatchStatus[] = ['Watching', 'Planning', 'Completed'];
+
 export const ShowDetailsModal: React.FC = () => {
-  const { selectedShow, closeShowDetails } = useApp();
+  const { 
+    selectedShow, 
+    closeShowDetails, 
+    watchlist, 
+    addToWatchlist, 
+    setWatchStatus, 
+    removeFromWatchlist 
+  } = useApp();
   const insets = useSafeAreaInsets();
   const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
+  const [showStatusPicker, setShowStatusPicker] = useState(false);
 
   if (!selectedShow) {
     return null;
   }
 
+  const watchlistItem = watchlist.find(
+    (w) => w.showId === selectedShow.id || w.title.toLowerCase() === selectedShow.title.toLowerCase()
+  );
+  const isInWatchlist = Boolean(watchlistItem);
+
   const handleClose = () => {
     hapticLight();
     setIsSynopsisExpanded(false);
+    setShowStatusPicker(false);
     closeShowDetails();
+  };
+
+  const handleAddToWatchlist = () => {
+    hapticMedium();
+    addToWatchlist(selectedShow, 'Watching');
+  };
+
+  const handleChangeStatus = (newStatus: WatchStatus) => {
+    if (watchlistItem) {
+      hapticMedium();
+      setWatchStatus(watchlistItem.id, newStatus);
+    }
+    setShowStatusPicker(false);
+  };
+
+  const handleRemoveFromWatchlist = () => {
+    if (!watchlistItem) return;
+    hapticLight();
+    Alert.alert(
+      'Remove from Watchlist',
+      `Are you sure you want to remove "${selectedShow.title}" from your watchlist?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            hapticMedium();
+            removeFromWatchlist(watchlistItem.id);
+          },
+        },
+      ]
+    );
   };
 
   const backdropSource = selectedShow.backdropUrl || selectedShow.posterUrl;
@@ -38,6 +89,7 @@ export const ShowDetailsModal: React.FC = () => {
     selectedShow.totalEpisodes === '∞' ||
     (typeof selectedShow.totalEpisodes === 'number' && selectedShow.totalEpisodes >= 999);
   const displayTotal = isInfinity ? '∞' : selectedShow.totalEpisodes;
+
 
   return (
     <Modal
@@ -137,6 +189,49 @@ export const ShowDetailsModal: React.FC = () => {
               </View>
             )}
 
+            {/* Watchlist Action Section */}
+            <View style={styles.actionSection}>
+              {!isInWatchlist ? (
+                <TouchableOpacity
+                  style={styles.addToWatchlistBtn}
+                  onPress={handleAddToWatchlist}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="plus" size={18} color="#FFFFFF" strokeWidth={2.5} style={{ marginRight: 8 }} />
+                  <Text style={styles.addToWatchlistText}>ADD TO WATCHLIST</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.watchlistActionsRow}>
+                  {/* Status Dropdown Button */}
+                  <TouchableOpacity
+                    style={styles.statusDropdownBtn}
+                    onPress={() => {
+                      hapticLight();
+                      setShowStatusPicker(true);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.statusDot} />
+                    <Text style={styles.statusLabelText}>
+                      STATUS:{' '}
+                      <Text style={styles.statusValueText}>{watchlistItem?.status.toUpperCase()}</Text>
+                    </Text>
+                    <Feather name="chevron-down" size={16} color={COLORS.darkGreen} />
+                  </TouchableOpacity>
+
+                  {/* Remove Button */}
+                  <TouchableOpacity
+                    style={styles.removeWatchlistBtn}
+                    onPress={handleRemoveFromWatchlist}
+                    activeOpacity={0.8}
+                    accessibilityLabel="Remove from watchlist"
+                  >
+                    <Feather name="trash-2" size={18} color={COLORS.darkGreen} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
             {/* Synopsis Section */}
             {selectedShow.description && (
               <View style={styles.synopsisSection}>
@@ -160,10 +255,45 @@ export const ShowDetailsModal: React.FC = () => {
             )}
           </View>
         </ScrollView>
+
+        {/* Status Picker Modal */}
+        <Modal
+          visible={showStatusPicker}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowStatusPicker(false)}
+        >
+          <TouchableOpacity
+            style={styles.pickerBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowStatusPicker(false)}
+          >
+            <View style={styles.pickerCard}>
+              <Text style={styles.pickerTitle}>SELECT WATCH STATUS</Text>
+              {STATUS_OPTIONS.map((status) => {
+                const isCurrent = watchlistItem?.status === status;
+                return (
+                  <TouchableOpacity
+                    key={status}
+                    style={[styles.pickerOption, isCurrent && styles.pickerOptionActive]}
+                    onPress={() => handleChangeStatus(status)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.pickerOptionText, isCurrent && styles.pickerOptionTextActive]}>
+                      {status}
+                    </Text>
+                    {isCurrent && <Feather name="check" size={18} color="#FFFFFF" strokeWidth={3} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </View>
     </Modal>
   );
 };
+
 
 const styles = StyleSheet.create({
   rootContainer: {
@@ -343,4 +473,116 @@ const styles = StyleSheet.create({
     color: COLORS.primaryDark,
     textDecorationLine: 'underline',
   },
+  actionSection: {
+    marginBottom: 20,
+    marginTop: 4,
+  },
+  addToWatchlistBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000',
+    borderWidth: BORDERS.teal,
+    borderColor: COLORS.primary,
+    borderRadius: RADIUS.none,
+    paddingVertical: 13,
+  },
+  addToWatchlistText: {
+    fontFamily: FONTS.bold,
+    fontSize: 14.5,
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
+  },
+  watchlistActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  statusDropdownBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderWidth: BORDERS.teal,
+    borderColor: COLORS.primary,
+    borderRadius: RADIUS.none,
+    paddingHorizontal: 14,
+    height: 48,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.primaryDark,
+    marginRight: 8,
+  },
+  statusLabelText: {
+    flex: 1,
+    fontFamily: FONTS.medium,
+    fontSize: 13,
+    color: COLORS.darkGreen,
+  },
+  statusValueText: {
+    fontFamily: FONTS.bold,
+    color: COLORS.primaryDark,
+  },
+  removeWatchlistBtn: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: COLORS.darkGreen,
+    borderRadius: RADIUS.none,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pickerBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  pickerCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: COLORS.darkGreen,
+    borderRadius: RADIUS.none,
+    padding: 18,
+  },
+  pickerTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.darkGreen,
+    letterSpacing: 2,
+    marginBottom: 14,
+    textAlign: 'center',
+  },
+  pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1.2,
+    borderColor: COLORS.darkGreen,
+    borderRadius: RADIUS.none,
+    marginBottom: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  pickerOptionActive: {
+    backgroundColor: COLORS.primaryDark,
+    borderColor: COLORS.primaryDark,
+  },
+  pickerOptionText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: COLORS.darkGreen,
+  },
+  pickerOptionTextActive: {
+    color: '#FFFFFF',
+  },
 });
+
