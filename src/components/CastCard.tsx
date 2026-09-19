@@ -6,15 +6,20 @@ import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 
 interface CastCardProps {
   member: CastMember;
+  cardWidth?: number;
+  style?: any;
 }
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 44) / 2;
 
-export const CastCard: React.FC<CastCardProps> = ({ member }) => {
+export const CastCard: React.FC<CastCardProps> = ({ member, cardWidth, style }) => {
+  const actualWidth = cardWidth || CARD_WIDTH;
+  const imageBoxHeight = actualWidth * 0.72;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.imageBox}>
+    <View style={[styles.container, cardWidth ? { width: actualWidth, marginBottom: 0 } : null, style]}>
+      <View style={[styles.imageBox, cardWidth ? { height: imageBoxHeight } : null]}>
         {/* Left: Character Portrait */}
         <View style={styles.halfImage}>
           <Image

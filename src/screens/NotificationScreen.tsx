@@ -1,8 +1,9 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { NotificationItem } from '../types';
+import { INITIAL_SHOWS } from '../data/mockData';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 import { hapticLight, hapticSuccess } from '../utils/haptics';
 
@@ -10,12 +11,19 @@ export const NotificationScreen: React.FC = () => {
   const { 
     notifications, 
     markNotificationRead, 
-    markAllNotificationsRead 
+    markAllNotificationsRead,
+    openShowDetails
   } = useApp();
 
-  const handleNotificationPress = (id: string) => {
+  const handleNotificationPress = (item: NotificationItem) => {
     hapticLight();
-    markNotificationRead(id);
+    markNotificationRead(item.id);
+    const show = INITIAL_SHOWS.find(
+      (s) => s.title.toLowerCase() === item.showTitle.toLowerCase()
+    );
+    if (show) {
+      openShowDetails(show);
+    }
   };
 
   const handleMarkAllRead = () => {
@@ -27,7 +35,7 @@ export const NotificationScreen: React.FC = () => {
     return (
       <TouchableOpacity
         style={[styles.card, !item.isRead && styles.unreadCard]}
-        onPress={() => handleNotificationPress(item.id)}
+        onPress={() => handleNotificationPress(item)}
         activeOpacity={0.8}
       >
         {/* Left Thumbnail (Square) */}

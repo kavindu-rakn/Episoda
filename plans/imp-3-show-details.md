@@ -1,4 +1,4 @@
-﻿# Implementation Plan 3: Show Details Modal & Episode Stepper
+# Implementation Plan 3: Show Details Modal & Episode Stepper
 
 This plan details the step-by-step implementation of the Show Details Modal and interactive Episode Stepper, bridging card browsing with full media tracking and episode management.
 
@@ -8,10 +8,10 @@ This plan details the step-by-step implementation of the Show Details Modal and 
 
 ```mermaid
 graph TD
-    S1[Commit 1: Model Types & Enriched Show Data] --> S2[Commit 2: Modal Shell & Backdrop Visual Banner]
-    S2 --> S3[Commit 3: Watchlist Status Selector & Action Button]
-    S3 --> S4[Commit 4: Season Tabs & Interactive Episode Stepper]
-    S4 --> S5[Commit 5: Linked Cast Credits & Global Tap Integration]
+    S1[Commit 1: Model Types & Enriched Show Data - DONE] --> S2[Commit 2: Modal Shell & Backdrop Visual Banner - DONE]
+    S2 --> S3[Commit 3: Watchlist Status Selector & Action Button - DONE]
+    S3 --> S4[Commit 4: Season Tabs & Interactive Episode Stepper - DONE]
+    S4 --> S5[Commit 5: Linked Cast Credits & Global Tap Integration - DONE]
 ```
 
 ---

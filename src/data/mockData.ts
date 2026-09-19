@@ -397,8 +397,9 @@ export const INITIAL_WATCHLIST: WatchlistItem[] = [
 ];
 
 export const INITIAL_CAST_MEMBERS: CastMember[] = [
+  // Demon Slayer
   {
-    id: 'cast-1',
+    id: 'cast-ds-1',
     characterName: 'Tanjiro',
     actorName: 'Zack Aguilar',
     showTitle: 'Demon Slayer',
@@ -407,7 +408,7 @@ export const INITIAL_CAST_MEMBERS: CastMember[] = [
     isVerified: true,
   },
   {
-    id: 'cast-2',
+    id: 'cast-ds-2',
     characterName: 'Nezuko',
     actorName: 'Abby Trott',
     showTitle: 'Demon Slayer',
@@ -416,7 +417,7 @@ export const INITIAL_CAST_MEMBERS: CastMember[] = [
     isVerified: true,
   },
   {
-    id: 'cast-3',
+    id: 'cast-ds-3',
     characterName: 'Zenitsu',
     actorName: 'Aleks Le',
     showTitle: 'Demon Slayer',
@@ -425,7 +426,7 @@ export const INITIAL_CAST_MEMBERS: CastMember[] = [
     isVerified: true,
   },
   {
-    id: 'cast-4',
+    id: 'cast-ds-4',
     characterName: 'Inosuke',
     actorName: 'B. Papenbrook',
     showTitle: 'Demon Slayer',
@@ -434,7 +435,7 @@ export const INITIAL_CAST_MEMBERS: CastMember[] = [
     isVerified: true,
   },
   {
-    id: 'cast-5',
+    id: 'cast-ds-5',
     characterName: 'Tomioka',
     actorName: 'J. Y. Bosch',
     showTitle: 'Demon Slayer',
@@ -443,7 +444,7 @@ export const INITIAL_CAST_MEMBERS: CastMember[] = [
     isVerified: true,
   },
   {
-    id: 'cast-6',
+    id: 'cast-ds-6',
     characterName: 'Rengoku',
     actorName: 'M. Whitten',
     showTitle: 'Demon Slayer',
@@ -452,7 +453,7 @@ export const INITIAL_CAST_MEMBERS: CastMember[] = [
     isVerified: true,
   },
   {
-    id: 'cast-7',
+    id: 'cast-ds-7',
     characterName: 'Gyomei',
     actorName: 'C. Freeman',
     showTitle: 'Demon Slayer',
@@ -461,12 +462,255 @@ export const INITIAL_CAST_MEMBERS: CastMember[] = [
     isVerified: true,
   },
   {
-    id: 'cast-8',
+    id: 'cast-ds-8',
     characterName: 'Muzan',
     actorName: 'Greg Chun',
     showTitle: 'Demon Slayer',
     characterImageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&auto=format&fit=crop&q=80',
     actorImageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+
+  // The Boys
+  {
+    id: 'cast-tb-1',
+    characterName: 'Billy Butcher',
+    actorName: 'Karl Urban',
+    showTitle: 'The Boys',
+    characterImageUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-tb-2',
+    characterName: 'Homelander',
+    actorName: 'Antony Starr',
+    showTitle: 'The Boys',
+    characterImageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-tb-3',
+    characterName: 'Hughie Campbell',
+    actorName: 'Jack Quaid',
+    showTitle: 'The Boys',
+    characterImageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-tb-4',
+    characterName: 'Starlight',
+    actorName: 'Erin Moriarty',
+    showTitle: 'The Boys',
+    characterImageUrl: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+
+  // One Piece
+  {
+    id: 'cast-op-1',
+    characterName: 'Monkey D. Luffy',
+    actorName: 'Mayumi Tanaka',
+    showTitle: 'One Piece',
+    characterImageUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-op-2',
+    characterName: 'Roronoa Zoro',
+    actorName: 'Kazuya Nakai',
+    showTitle: 'One Piece',
+    characterImageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-op-3',
+    characterName: 'Nami',
+    actorName: 'Akemi Okamura',
+    showTitle: 'One Piece',
+    characterImageUrl: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-op-4',
+    characterName: 'Sanji',
+    actorName: 'Hiroaki Hirata',
+    showTitle: 'One Piece',
+    characterImageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+
+  // Attack on Titan
+  {
+    id: 'cast-aot-1',
+    characterName: 'Eren Yeager',
+    actorName: 'Yuki Kaji',
+    showTitle: 'Attack on Titan',
+    characterImageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-aot-2',
+    characterName: 'Mikasa Ackerman',
+    actorName: 'Yui Ishikawa',
+    showTitle: 'Attack on Titan',
+    characterImageUrl: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-aot-3',
+    characterName: 'Levi Ackerman',
+    actorName: 'Hiroshi Kamiya',
+    showTitle: 'Attack on Titan',
+    characterImageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+
+  // Peaky Blinders
+  {
+    id: 'cast-pb-1',
+    characterName: 'Thomas Shelby',
+    actorName: 'Cillian Murphy',
+    showTitle: 'Peaky Blinders',
+    characterImageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-pb-2',
+    characterName: 'Arthur Shelby',
+    actorName: 'Paul Anderson',
+    showTitle: 'Peaky Blinders',
+    characterImageUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-pb-3',
+    characterName: 'Polly Gray',
+    actorName: 'Helen McCrory',
+    showTitle: 'Peaky Blinders',
+    characterImageUrl: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+
+  // Stranger Things
+  {
+    id: 'cast-st-1',
+    characterName: 'Eleven',
+    actorName: 'Millie Bobby Brown',
+    showTitle: 'Stranger Things',
+    characterImageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-st-2',
+    characterName: 'Mike Wheeler',
+    actorName: 'Finn Wolfhard',
+    showTitle: 'Stranger Things',
+    characterImageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-st-3',
+    characterName: 'Jim Hopper',
+    actorName: 'David Harbour',
+    showTitle: 'Stranger Things',
+    characterImageUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+
+  // Chernobyl
+  {
+    id: 'cast-cb-1',
+    characterName: 'Valery Legasov',
+    actorName: 'Jared Harris',
+    showTitle: 'Chernobyl',
+    characterImageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-cb-2',
+    characterName: 'Boris Shcherbina',
+    actorName: 'Stellan Skarsgård',
+    showTitle: 'Chernobyl',
+    characterImageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+
+  // Jujutsu Kaisen
+  {
+    id: 'cast-jjk-1',
+    characterName: 'Yuji Itadori',
+    actorName: 'Junya Enoki',
+    showTitle: 'Jujutsu Kaisen',
+    characterImageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-jjk-2',
+    characterName: 'Satoru Gojo',
+    actorName: 'Yuichi Nakamura',
+    showTitle: 'Jujutsu Kaisen',
+    characterImageUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+
+  // Breaking Bad
+  {
+    id: 'cast-bb-1',
+    characterName: 'Walter White',
+    actorName: 'Bryan Cranston',
+    showTitle: 'Breaking Bad',
+    characterImageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-bb-2',
+    characterName: 'Jesse Pinkman',
+    actorName: 'Aaron Paul',
+    showTitle: 'Breaking Bad',
+    characterImageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+
+  // Vinland Saga
+  {
+    id: 'cast-vs-1',
+    characterName: 'Thorfinn',
+    actorName: 'Yuto Uemura',
+    showTitle: 'Vinland Saga',
+    characterImageUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+    isVerified: true,
+  },
+  {
+    id: 'cast-vs-2',
+    characterName: 'Askeladd',
+    actorName: 'Naoya Uchida',
+    showTitle: 'Vinland Saga',
+    characterImageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&auto=format&fit=crop&q=80',
+    actorImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80',
     isVerified: true,
   },
 ];

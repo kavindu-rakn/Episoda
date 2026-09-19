@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, Alert } from 'react-native';
 import { SearchInput } from '../components/SearchInput';
 import { FilterTabs } from '../components/FilterTabs';
@@ -7,11 +7,12 @@ import { useApp } from '../context/AppContext';
 import { INITIAL_SHOWS } from '../data/mockData';
 import { MediaType, Show } from '../types';
 import { COLORS, FONTS } from '../constants/theme';
+import { hapticLight } from '../utils/haptics';
 
 export const DiscoverScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('Peaky Blinders');
   const [selectedType, setSelectedType] = useState<MediaType | 'ALL'>('TV');
-  const { addToWatchlist } = useApp();
+  const { openShowDetails } = useApp();
 
   // Generate cards for search results, including season breakdown if available
   const displayItems = useMemo(() => {
@@ -53,15 +54,16 @@ export const DiscoverScreen: React.FC = () => {
   }, [searchQuery, selectedType]);
 
   const handlePressCard = (show: Show) => {
-    Alert.alert(
-      show.title,
-      `Add "${show.title}" to your Watchlist?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Add to Watching', onPress: () => addToWatchlist(show, 'Watching') },
-        { text: 'Add to Planning', onPress: () => addToWatchlist(show, 'Planning') },
-      ]
-    );
+    hapticLight();
+    const fullShow =
+      INITIAL_SHOWS.find(
+        (s) =>
+          s.id === show.id ||
+          show.id.startsWith(s.id) ||
+          s.title.toLowerCase() === show.title.toLowerCase() ||
+          show.title.toLowerCase().startsWith(s.title.toLowerCase())
+      ) || show;
+    openShowDetails(fullShow);
   };
 
   return (

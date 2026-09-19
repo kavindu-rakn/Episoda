@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { WatchStatus } from '../types';
+import { INITIAL_CAST_MEMBERS } from '../data/mockData';
+import { CastCard } from './CastCard';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 import { hapticLight, hapticMedium, hapticSuccess } from '../utils/haptics';
 
@@ -58,6 +60,19 @@ export const ShowDetailsModal: React.FC = () => {
   const watchedCount = watchlistItem?.watchedEpisodes || 0;
   const numericTotal = typeof selectedShow.totalEpisodes === 'number' ? selectedShow.totalEpisodes : 0;
   const progressPercentage = numericTotal > 0 ? Math.min(100, Math.round((watchedCount / numericTotal) * 100)) : 0;
+
+  const showCast = useMemo(() => {
+    if (!selectedShow) return [];
+    const titleLower = selectedShow.title.toLowerCase();
+    const shortLower = selectedShow.shortTitle?.toLowerCase();
+    return INITIAL_CAST_MEMBERS.filter(
+      (m) =>
+        m.showTitle.toLowerCase() === titleLower ||
+        (shortLower && m.showTitle.toLowerCase() === shortLower) ||
+        titleLower.includes(m.showTitle.toLowerCase()) ||
+        m.showTitle.toLowerCase().includes(titleLower)
+    );
+  }, [selectedShow]);
 
   const handleClose = () => {
     hapticLight();
@@ -384,6 +399,23 @@ export const ShowDetailsModal: React.FC = () => {
                 })
               )}
             </View>
+            
+            {/* Cast & Voice Actors Section */}
+            {showCast.length > 0 && (
+              <View style={styles.castSection}>
+                <Text style={styles.sectionHeading}>CAST & VOICE ACTORS</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.castScroll}
+                  style={styles.castScrollContainer}
+                >
+                  {showCast.map((member) => (
+                    <CastCard key={member.id} member={member} cardWidth={140} />
+                  ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
         </ScrollView>
 
@@ -839,6 +871,17 @@ const styles = StyleSheet.create({
   episodeCheckBtnWatched: {
     backgroundColor: COLORS.primaryDark,
     borderColor: COLORS.primaryDark,
+  },
+  castSection: {
+    marginBottom: 28,
+  },
+  castScrollContainer: {
+    marginHorizontal: -20,
+  },
+  castScroll: {
+    paddingHorizontal: 20,
+    gap: 12,
+    paddingTop: 4,
   },
 });
 

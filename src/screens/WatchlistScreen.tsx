@@ -1,15 +1,36 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { WatchlistRow } from '../components/WatchlistRow';
+import { INITIAL_SHOWS } from '../data/mockData';
+import { WatchlistItem, Show } from '../types';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
+import { hapticLight } from '../utils/haptics';
 
 export const WatchlistScreen: React.FC = () => {
-  const { watchlist, updateEpisodeProgress } = useApp();
+  const { watchlist, updateEpisodeProgress, openShowDetails } = useApp();
 
   const watchingItems = watchlist.filter((i) => i.status === 'Watching');
   const planningItems = watchlist.filter((i) => i.status === 'Planning');
   const completedItems = watchlist.filter((i) => i.status === 'Completed');
+
+  const handlePressRow = (item: WatchlistItem) => {
+    hapticLight();
+    const matchingShow: Show =
+      INITIAL_SHOWS.find(
+        (s) =>
+          s.id === item.showId ||
+          s.title.toLowerCase() === item.title.toLowerCase() ||
+          (item.title.toLowerCase().startsWith(s.title.toLowerCase()))
+      ) || {
+        id: item.showId,
+        title: item.title,
+        type: item.type,
+        posterUrl: item.posterUrl,
+        totalEpisodes: item.totalEpisodes,
+      };
+    openShowDetails(matchingShow);
+  };
 
   const renderSection = (title: string, items: typeof watchlist) => {
     return (
@@ -26,6 +47,7 @@ export const WatchlistScreen: React.FC = () => {
               item={item}
               onIncrement={() => updateEpisodeProgress(item.id, 1)}
               onDecrement={() => updateEpisodeProgress(item.id, -1)}
+              onPress={() => handlePressRow(item)}
             />
           ))
         )}
