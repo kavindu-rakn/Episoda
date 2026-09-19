@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,13 +9,15 @@ import {
   Modal,
   Dimensions,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
-import { WatchStatus, CastMember } from '../types';
+import { WatchStatus, CastMember, Show } from '../types';
 import { INITIAL_CAST_MEMBERS } from '../data/mockData';
+import { fetchFullShowDetails, getShowCast } from '../services/mediaService';
 import { CastCard } from './CastCard';
 import { COLORS, FONTS, RADIUS, BORDERS } from '../constants/theme';
 import { hapticLight, hapticMedium, hapticSuccess } from '../utils/haptics';
@@ -40,32 +42,88 @@ export const ShowDetailsModal: React.FC = () => {
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [selectedSeasonIndex, setSelectedSeasonIndex] = useState(0);
 
+  const [isHydrating, setIsHydrating] = useState(false);
+  const [hydratedShow, setHydratedShow] = useState<Show | null>(null);
+  const [liveCast, setLiveCast] = useState<CastMember[]>([]);
+
+  // Hydrate full episodes and cast when an online show is selected
+  useEffect(() => {
+    if (!selectedShow) {
+      setHydratedShow(null);
+      setLiveCast([]);
+      setIsHydrating(false);
+      return;
+    }
+
+    // If local show with populated seasons, no network fetch needed
+    if (selectedShow.seasons && selectedShow.seasons.length > 0) {
+      setHydratedShow(selectedShow);
+      setLiveCast(getShowCast(selectedShow));
+      setIsHydrating(false);
+      return;
+    }
+
+    // If online title, fetch complete seasons and cast
+    if (selectedShow.id.startsWith('jikan-') || selectedShow.id.startsWith('tvmaze-')) {
+      let isMounted = true;
+      setIsHydrating(true);
+
+      fetchFullShowDetails(selectedShow)
+        .then((res) => {
+          if (isMounted) {
+            setHydratedShow(res.show);
+            setLiveCast(res.cast);
+            setIsHydrating(false);
+          }
+        })
+        .catch((err) => {
+          console.warn('[ShowDetailsModal] Hydration error:', err);
+          if (isMounted) {
+            setHydratedShow(selectedShow);
+            setIsHydrating(false);
+          }
+        });
+
+      return () => {
+        isMounted = false;
+      };
+    } else {
+      setHydratedShow(selectedShow);
+      setLiveCast(getShowCast(selectedShow));
+      setIsHydrating(false);
+    }
+  }, [selectedShow]);
+
   if (!selectedShow) {
     return null;
   }
 
+  const activeShow = hydratedShow || selectedShow;
+
   const watchlistItem = watchlist.find(
-    (w) => w.showId === selectedShow.id || w.title.toLowerCase() === selectedShow.title.toLowerCase()
+    (w) => w.showId === activeShow.id || w.title.toLowerCase() === activeShow.title.toLowerCase()
   );
   const isInWatchlist = Boolean(watchlistItem);
 
-  const hasSeasons = Boolean(selectedShow.seasons && selectedShow.seasons.length > 0);
-  const safeSeasonIndex = Math.min(selectedSeasonIndex, (selectedShow.seasons?.length || 1) - 1);
-  const currentSeason = hasSeasons ? selectedShow.seasons![safeSeasonIndex] : null;
-  const episodesList = currentSeason?.episodes || selectedShow.episodes || [];
+  const hasSeasons = Boolean(activeShow.seasons && activeShow.seasons.length > 0);
+  const safeSeasonIndex = Math.min(selectedSeasonIndex, (activeShow.seasons?.length || 1) - 1);
+  const currentSeason = hasSeasons ? activeShow.seasons![safeSeasonIndex] : null;
+  const episodesList = currentSeason?.episodes || activeShow.episodes || [];
 
   const previousSeasonsEpisodes = hasSeasons
-    ? selectedShow.seasons!.slice(0, safeSeasonIndex).reduce((sum, s) => sum + s.totalEpisodes, 0)
+    ? activeShow.seasons!.slice(0, safeSeasonIndex).reduce((sum, s) => sum + s.totalEpisodes, 0)
     : 0;
 
   const watchedCount = watchlistItem?.watchedEpisodes || 0;
-  const numericTotal = typeof selectedShow.totalEpisodes === 'number' ? selectedShow.totalEpisodes : 0;
+  const numericTotal = typeof activeShow.totalEpisodes === 'number' ? activeShow.totalEpisodes : 0;
   const progressPercentage = numericTotal > 0 ? Math.min(100, Math.round((watchedCount / numericTotal) * 100)) : 0;
 
   const showCast = useMemo(() => {
-    if (!selectedShow) return [];
-    const titleLower = selectedShow.title.toLowerCase();
-    const shortLower = selectedShow.shortTitle?.toLowerCase();
+    if (!activeShow) return [];
+    if (liveCast.length > 0) return liveCast;
+
+    const titleLower = activeShow.title.toLowerCase();
+    const shortLower = activeShow.shortTitle?.toLowerCase();
     return INITIAL_CAST_MEMBERS.filter(
       (m) =>
         m.showTitle.toLowerCase() === titleLower ||
@@ -73,7 +131,7 @@ export const ShowDetailsModal: React.FC = () => {
         titleLower.includes(m.showTitle.toLowerCase()) ||
         m.showTitle.toLowerCase().includes(titleLower)
     );
-  }, [selectedShow]);
+  }, [activeShow, liveCast]);
 
   const handleClose = () => {
     hapticLight();
@@ -91,7 +149,7 @@ export const ShowDetailsModal: React.FC = () => {
 
   const handleAddToWatchlist = () => {
     hapticMedium();
-    addToWatchlist(selectedShow, 'Watching');
+    addToWatchlist(activeShow, 'Watching');
   };
 
   const handleToggleEpisode = (epNumber: number) => {
@@ -110,14 +168,13 @@ export const ShowDetailsModal: React.FC = () => {
     }
 
     if (!isInWatchlist) {
-      addToWatchlist(selectedShow, 'Watching', target);
+      addToWatchlist(activeShow, 'Watching', target);
     } else if (watchlistItem) {
       setEpisodeProgress(watchlistItem.id, target);
     }
   };
 
   const handleChangeStatus = (newStatus: WatchStatus) => {
-
     if (watchlistItem) {
       hapticMedium();
       setWatchStatus(watchlistItem.id, newStatus);
@@ -130,7 +187,7 @@ export const ShowDetailsModal: React.FC = () => {
     hapticLight();
     Alert.alert(
       'Remove from Watchlist',
-      `Are you sure you want to remove "${selectedShow.title}" from your watchlist?`,
+      `Are you sure you want to remove "${activeShow.title}" from your watchlist?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -145,12 +202,11 @@ export const ShowDetailsModal: React.FC = () => {
     );
   };
 
-  const backdropSource = selectedShow.backdropUrl || selectedShow.posterUrl;
+  const backdropSource = activeShow.backdropUrl || activeShow.posterUrl;
   const isInfinity =
-    selectedShow.totalEpisodes === '∞' ||
-    (typeof selectedShow.totalEpisodes === 'number' && selectedShow.totalEpisodes >= 999);
-  const displayTotal = isInfinity ? '∞' : selectedShow.totalEpisodes;
-
+    activeShow.totalEpisodes === '∞' ||
+    (typeof activeShow.totalEpisodes === 'number' && activeShow.totalEpisodes >= 999);
+  const displayTotal = isInfinity ? '∞' : activeShow.totalEpisodes;
 
   return (
     <Modal
@@ -187,11 +243,10 @@ export const ShowDetailsModal: React.FC = () => {
               style={StyleSheet.absoluteFill}
             />
 
-
             {/* Poster Thumbnail Overlap */}
             <View style={styles.posterOverlayWrapper}>
               <Image
-                source={{ uri: selectedShow.posterUrl }}
+                source={{ uri: activeShow.posterUrl }}
                 style={styles.posterThumbnail}
                 resizeMode="cover"
               />
@@ -202,34 +257,34 @@ export const ShowDetailsModal: React.FC = () => {
           {/* Header Metadata Section */}
           <View style={styles.metaContainer}>
             {/* Title */}
-            <Text style={styles.showTitle}>{selectedShow.title}</Text>
+            <Text style={styles.showTitle}>{activeShow.title}</Text>
 
             {/* Key Info Badges */}
             <View style={styles.badgesRow}>
               {/* Media Type Badge */}
               <View style={styles.typeBadge}>
-                <Text style={styles.typeBadgeText}>{selectedShow.type}</Text>
+                <Text style={styles.typeBadgeText}>{activeShow.type}</Text>
               </View>
 
               {/* Release Year */}
-              {selectedShow.year && (
+              {activeShow.year && (
                 <View style={styles.infoPill}>
-                  <Text style={styles.infoPillText}>{selectedShow.year}</Text>
+                  <Text style={styles.infoPillText}>{activeShow.year}</Text>
                 </View>
               )}
 
               {/* Airing Status */}
-              {selectedShow.status && (
+              {activeShow.status && (
                 <View style={[styles.infoPill, styles.statusPill]}>
-                  <Text style={styles.statusPillText}>{selectedShow.status}</Text>
+                  <Text style={styles.statusPillText}>{activeShow.status}</Text>
                 </View>
               )}
 
               {/* Rating */}
-              {selectedShow.rating && (
+              {activeShow.rating && (
                 <View style={styles.ratingPill}>
                   <Feather name="star" size={13} color="#F59E0B" />
-                  <Text style={styles.ratingText}>{selectedShow.rating.toFixed(1)}</Text>
+                  <Text style={styles.ratingText}>{activeShow.rating.toFixed(1)}</Text>
                 </View>
               )}
 
@@ -240,9 +295,9 @@ export const ShowDetailsModal: React.FC = () => {
             </View>
 
             {/* Genres Row */}
-            {selectedShow.genres && selectedShow.genres.length > 0 && (
+            {activeShow.genres && activeShow.genres.length > 0 && (
               <View style={styles.genresRow}>
-                {selectedShow.genres.map((genre) => (
+                {activeShow.genres.map((genre) => (
                   <View key={genre} style={styles.genreTag}>
                     <Text style={styles.genreTagText}>{genre}</Text>
                   </View>
@@ -294,14 +349,14 @@ export const ShowDetailsModal: React.FC = () => {
             </View>
 
             {/* Synopsis Section */}
-            {selectedShow.description && (
+            {activeShow.description && (
               <View style={styles.synopsisSection}>
                 <Text style={styles.sectionHeading}>SYNOPSIS</Text>
                 <Text
                   style={styles.synopsisText}
                   numberOfLines={isSynopsisExpanded ? undefined : 3}
                 >
-                  {selectedShow.description}
+                  {activeShow.description}
                 </Text>
                 <TouchableOpacity
                   onPress={() => setIsSynopsisExpanded(!isSynopsisExpanded)}
@@ -340,7 +395,7 @@ export const ShowDetailsModal: React.FC = () => {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.seasonsScroll}
                 >
-                  {selectedShow.seasons!.map((season, idx) => {
+                  {activeShow.seasons!.map((season, idx) => {
                     const isActive = safeSeasonIndex === idx;
                     return (
                       <TouchableOpacity
@@ -361,8 +416,13 @@ export const ShowDetailsModal: React.FC = () => {
                 </ScrollView>
               )}
 
-              {/* Episode List */}
-              {episodesList.length === 0 ? (
+              {/* Episode List or Loading Indicator */}
+              {isHydrating ? (
+                <View style={styles.episodesHydratingCard}>
+                  <ActivityIndicator size="small" color={COLORS.primaryDark} />
+                  <Text style={styles.episodesHydratingText}>FETCHING LIVE EPISODES & SEASONS...</Text>
+                </View>
+              ) : episodesList.length === 0 ? (
                 <View style={styles.noEpisodesCard}>
                   <Text style={styles.noEpisodesText}>Episode list coming soon.</Text>
                 </View>
@@ -813,6 +873,25 @@ const styles = StyleSheet.create({
   },
   seasonTabTextActive: {
     color: '#FFFFFF',
+  },
+  episodesHydratingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: COLORS.primaryDark,
+    borderRadius: RADIUS.none,
+    marginBottom: 12,
+  },
+  episodesHydratingText: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    color: COLORS.darkGreen,
+    letterSpacing: 0.8,
   },
   noEpisodesCard: {
     padding: 20,
