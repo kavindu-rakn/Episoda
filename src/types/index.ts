@@ -19,6 +19,9 @@ export interface SeasonInfo {
   episodes?: EpisodeItem[];
 }
 
+export type Episode = EpisodeItem;
+export type Season = SeasonInfo;
+
 export interface Show {
   id: string;
   title: string;
